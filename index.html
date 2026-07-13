@@ -16,7 +16,7 @@
     --accent-deep: #7c5cf0;
     --confident: #34d399;
     --review: #fbbf24;
-    --unknown: #e879f9;
+    --unknown: #f87171;
   }
   html, body, :root[data-theme="light"] body { background: var(--page); }
   body {
@@ -318,11 +318,6 @@
       <div class="step"><div class="n">4</div><div class="t">Share</div><div class="d">one set, everyone on it</div></div>
     </div>
 
-    <div class="legend">
-      <span><span class="dot g"></span> sure of it</span>
-      <span><span class="dot a"></span> needs your ear</span>
-      <span><span class="dot u"></span> unknown ID — the good stuff</span>
-    </div>
   </section>
 
   <!-- 2 · capture -->
@@ -348,27 +343,28 @@
               <div class="pulse-ring"></div><div class="pulse-ring"></div><div class="pulse-ring"></div>
               <div class="pulse-core">
                 <div class="eq"><span></span><span></span><span></span><span></span><span></span></div>
-                <div style="font-size:11.5px; font-weight:700; letter-spacing:.12em; opacity:.85;">LISTENING</div>
+                <div style="font-size:13px; font-weight:700; opacity:.95;">Tap to catch</div>
+                <div style="font-size:9.5px; font-weight:500; opacity:.55; margin-top:2px;">always listening</div>
               </div>
             </div>
             <div class="h-large" style="font-size:23px;">32 tracks caught</div>
-            <div class="h-sub">phone can sleep — capture keeps running</div>
+            <div class="h-sub">pocket catches are best-effort — tap for the songs that matter</div>
           </div>
           <div class="section-label">caught this set <span class="count">32</span></div>
           <div class="card" style="padding:6px 14px;">
             <div class="track-row">
               <div class="art unknown">?</div>
-              <div class="meta"><div class="t" style="color:var(--unknown);">Unknown ID</div><div class="s">clip saved for the morning</div></div>
+              <div class="meta"><div class="t" style="color:var(--unknown);">Unknown</div><div class="s">nothing matched here</div></div>
               <span class="dot u"></span><span class="time">1:34</span>
             </div>
             <div class="track-row">
-              <div class="art a2"></div>
-              <div class="meta"><div class="t">Higher Ground</div><div class="s">Rossi.</div></div>
+              <div class="art" style="background:url(art/onb-inthisbih.jpg) center/cover;"></div>
+              <div class="meta"><div class="t">In This Bih'</div><div class="s">Chris Lorenzo &amp; Kah-Lo</div></div>
               <span class="dot g"></span><span class="time">1:31</span>
             </div>
             <div class="track-row">
-              <div class="art a3"></div>
-              <div class="meta"><div class="t">Pressure (Extended Mix)</div><div class="s">Kolter</div></div>
+              <div class="art" style="background:url(art/onb-palm.jpg) center/cover;"></div>
+              <div class="meta"><div class="t">palm of my hands (Odd Mob Remix)</div><div class="s">John Summit &amp; venbee</div></div>
               <span class="dot a"></span><span class="time">1:26</span>
             </div>
           </div>
@@ -441,15 +437,15 @@
           </div>
           <div class="card" style="margin-bottom:10px;">
             <div style="display:flex; align-items:center; gap:12px;">
-              <div class="art a3"></div>
+              <div class="art" style="background:url(art/onb-carcrash.jpg) center/cover;"></div>
               <div style="flex:1; min-width:0;">
-                <div style="font-size:14.5px; font-weight:600;">Pressure (Extended Mix)</div>
-                <div style="font-size:12.5px; color:var(--dim); margin-top:2px;">Kolter · 1:26 am · 2h 6m in</div>
+                <div style="font-size:14.5px; font-weight:600;">car crash</div>
+                <div style="font-size:12.5px; color:var(--dim); margin-top:2px;">jigitz · 1:26 am</div>
               </div>
-              <span class="confidence mid">62%</span>
+              <span class="confidence mid">heard once</span>
             </div>
             <div class="row-actions">
-              <button class="btn ghost">▶ 15s clip</button>
+              <button class="btn ghost">▶ your clip</button>
               <button class="btn secondary">Skip</button>
               <button class="btn">Keep</button>
             </div>
@@ -466,14 +462,14 @@
           <div class="section-label">going in the playlist <span class="count">29</span></div>
           <div class="card" style="padding:6px 14px;">
             <div class="track-row">
-              <div class="art a2"></div>
-              <div class="meta"><div class="t">Higher Ground</div><div class="s">Rossi.</div></div>
+              <div class="art" style="background:url(art/onb-inthisbih.jpg) center/cover;"></div>
+              <div class="meta"><div class="t">In This Bih'</div><div class="s">Chris Lorenzo &amp; Kah-Lo</div></div>
               <span class="save-ic saved">♥</span>
               <span class="time">1:31</span>
             </div>
             <div class="track-row">
-              <div class="art"></div>
-              <div class="meta"><div class="t">On My Mind</div><div class="s">Chloé Caillet</div></div>
+              <div class="art" style="background:url(art/onb-palm.jpg) center/cover;"></div>
+              <div class="meta"><div class="t">palm of my hands (Odd Mob Remix)</div><div class="s">John Summit &amp; venbee</div></div>
               <span class="save-ic">♡</span>
               <span class="time">12:58</span>
             </div>
@@ -525,14 +521,14 @@
               <span class="state-pill done">reviewed ✓</span>
             </div>
             <div style="display:flex; gap:8px; margin-top:16px;">
-              <button class="btn small" style="flex:1;">Export playlist</button>
-              <button class="btn secondary small" style="flex:1;">+ Invite</button>
+              <button class="btn small" style="flex:1;">Open in Spotify</button>
+              <button class="btn secondary small" style="flex:1;">Share card</button>
             </div>
           </div>
           <div class="section-label">share it</div>
           <div class="share-mini">
             <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span class="brand">set<em>list</em></span>
+              <span class="brand"><em>Catchy</em></span>
               <span style="font-size:11px; color:var(--faint);">Jul 4 · 2026</span>
             </div>
             <div style="font-size:20px; font-weight:800; letter-spacing:-.02em; margin-top:10px;">Saturday @ Nowadays</div>
@@ -545,23 +541,23 @@
               </div>
             </div>
             <div style="font-size:11.5px; color:var(--dim); margin-top:10px;">
-              ♪ Higher Ground · Rush · On My Mind…
+              ♪ In This Bih' · palm of my hands · Wake Me Up…
             </div>
           </div>
           <div style="margin-top:10px;">
-            <button class="btn ghost small" style="width:100%;">Share as image</button>
+            <button class="btn ghost small" style="width:100%;">Share card + playlist link</button>
           </div>
           <div class="section-label">the playlist <span class="count">35</span></div>
           <div class="card" style="padding:6px 14px;">
             <div class="track-row">
-              <div class="art a2"></div>
-              <div class="meta"><div class="t">Higher Ground</div><div class="s">Rossi.</div></div>
+              <div class="art" style="background:url(art/onb-wakemeup.jpg) center/cover;"></div>
+              <div class="meta"><div class="t">Wake Me Up</div><div class="s">Avicii</div></div>
               <span class="save-ic saved">♥</span>
               <span class="time">1:31</span>
             </div>
             <div class="track-row">
-              <div class="art a4"></div>
-              <div class="meta"><div class="t">Rush</div><div class="s">Boys Noize</div></div>
+              <div class="art" style="background:url(art/onb-carcrash.jpg) center/cover;"></div>
+              <div class="meta"><div class="t">car crash</div><div class="s">jigitz</div></div>
               <span class="save-ic">♡</span>
               <span class="time">12:44</span>
             </div>
