@@ -1,736 +1,1330 @@
+<!doctype html>
+<html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Catchy — every set becomes a playlist</title>
+<title>Catchy — know every song that played</title>
+<meta name="description" content="Catchy listens along while music is playing and names what it hears — honestly, including what it missed — so the whole set comes home as a playlist you can keep and share.">
+
+
 <style>
   :root {
     color-scheme: dark;
-    --page: #0b0b11;
     --bg: #08080c;
-    --surface: rgba(255,255,255,.055);
-    --surface-2: rgba(255,255,255,.095);
-    --line: rgba(255,255,255,.09);
     --text: #f5f5f7;
-    --dim: rgba(245,245,247,.58);
-    --faint: rgba(245,245,247,.34);
+    --dim: rgba(245, 245, 247, 0.58);
+    --faint: rgba(245, 245, 247, 0.34);
     --accent: #a78bfa;
     --accent-deep: #7c5cf0;
     --confident: #34d399;
     --review: #fbbf24;
     --unknown: #f87171;
+    --surface: rgba(255, 255, 255, 0.055);
+    --surface-raised: rgba(255, 255, 255, 0.095);
+    --line: rgba(255, 255, 255, 0.09);
+    --radius-card: 20px;
+    --radius-cover: 14px;
+    --radius-art: 12px;
+    --space-xs: 4px;
+    --space-s: 8px;
+    --space-m: 12px;
+    --space-l: 16px;
+    --space-xl: 24px;
+    --font-h-large: 800 28px;
+    --font-h-medium: 800 24px;
+    --font-h-sub: 400 14px;
+    --font-section-label: 700 12px;
+    --font-body: 400 15px;
+    --font-track-title: 600 15px;
+    --font-track-sub: 400 12.5px;
+    --font-chip: 500 12.5px;
+    --font-time: 400 12px;
+    --font-tab: 600 10.5px;
+
+    --sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", sans-serif;
+    --page: #0b0b11;
+    --on-accent: #0b0618;
   }
-  html, body, :root[data-theme="light"] body { background: var(--page); }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  body, h1, h2, p, ul, li, figure { margin: 0; padding: 0; }
+  ul { list-style: none; }
+
+  html { scroll-behavior: smooth; }
+  html, body { background: var(--page); overflow-x: hidden; }
   body {
     color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", sans-serif;
+    font-family: var(--sans);
     -webkit-font-smoothing: antialiased;
     line-height: 1.5;
     overflow-x: hidden;
   }
-  .wrap { max-width: 620px; margin: 0 auto; padding: 0 20px; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 
-  .hero { position: relative; padding: 72px 0 20px; text-align: center; }
-  .hero::before {
-    content: ""; position: absolute; inset: -40px -200px auto;
-    height: 340px; pointer-events: none;
-    background: radial-gradient(ellipse at 50% 0%, rgba(124,92,240,.28), transparent 65%);
+  .wrap { max-width: 640px; margin: 0 auto; padding: 0 20px; }
+
+  /* Language. The marketing copy switches; the phone screens do not, because
+     the app itself is English-only — translating a screenshot would be a lie. */
+  .langbar { display: none; justify-content: center; gap: 4px; padding: 20px 0 0; }
+  .lang {
+    font: 500 12.5px/1 var(--sans); color: var(--faint); cursor: pointer;
+    background: none; border: 1px solid transparent; border-radius: 99px; padding: 6px 12px;
   }
-  .wordmark { font-size: 22px; font-weight: 800; letter-spacing: -.02em; position: relative; }
+  .lang:hover { color: var(--dim); }
+  .lang[aria-pressed="true"] {
+    color: var(--accent); background: var(--surface);
+    border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+  }
+  .applang { display: block; margin-bottom: 6px; }
+  .applang[hidden] { display: none; }
+
+  /* ---------------------------------------------------------------- hero */
+  .hero { position: relative; padding: 76px 0 12px; text-align: center; }
+  .hero::before {
+    content: ""; position: absolute; inset: -40px -200px auto; height: 340px;
+    pointer-events: none;
+    background: radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--accent-deep) 28%, transparent), transparent 65%);
+  }
+  .wordmark { position: relative; font-size: 22px; font-weight: 800; letter-spacing: -.02em; }
   .wordmark em { font-style: normal; color: var(--accent); }
   .eyebrow {
-    display: inline-block; margin: 26px 0 14px; position: relative;
+    position: relative; display: inline-block; margin: 26px 0 16px;
     font-size: 11.5px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
-    color: var(--accent); border: 1px solid rgba(167,139,250,.35);
+    color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
     border-radius: 99px; padding: 6px 14px;
   }
   h1 {
     position: relative; font-size: clamp(34px, 9vw, 46px); font-weight: 800;
-    letter-spacing: -.035em; line-height: 1.06; text-wrap: balance; margin-bottom: 18px;
+    letter-spacing: -.035em; line-height: 1.05; text-wrap: balance; margin-bottom: 18px;
   }
-  .lede { position: relative; font-size: 16.5px; color: var(--dim); text-wrap: pretty; max-width: 54ch; margin: 0 auto; }
+  .lede { position: relative; font-size: 16.5px; color: var(--dim); text-wrap: pretty; max-width: 52ch; margin: 0 auto; }
   .lede strong { color: var(--text); font-weight: 600; }
+  .versus {
+    position: relative; margin: 22px auto 0; max-width: 44ch;
+    font-size: 16px; font-weight: 700; letter-spacing: -.015em; color: var(--text); text-wrap: balance;
+  }
+  .versus b { color: var(--accent); font-weight: 700; }
 
-  .loop { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 40px 0 8px; }
-  @media (min-width: 560px) { .loop { grid-template-columns: repeat(4, 1fr); } }
+  /* the loop — each step jumps to its section */
+  .loop { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 36px 0 0; }
+  @media (min-width: 580px) { .loop { grid-template-columns: repeat(4, 1fr); } }
   .step {
-    background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
-    padding: 14px 12px; text-align: center;
+    display: block; text-decoration: none; color: inherit; text-align: left;
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-cover);
+    padding: 13px 14px; transition: border-color .18s ease, background .18s ease, transform .18s ease;
   }
-  .step .n { font-size: 11px; font-weight: 700; letter-spacing: .1em; color: var(--accent); }
-  .step .t { font-size: 13.5px; font-weight: 700; margin-top: 4px; }
-  .step .d { font-size: 12px; color: var(--dim); margin-top: 3px; line-height: 1.4; }
-
-  .legend {
-    display: flex; justify-content: center; gap: 18px; flex-wrap: wrap;
-    margin: 26px 0 0; font-size: 12.5px; color: var(--dim);
+  .step:hover, .step:focus-visible {
+    border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+    background: var(--surface-raised); transform: translateY(-2px);
   }
-  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .step .n { font: var(--font-section-label)/1 var(--sans); letter-spacing: .1em; color: var(--accent); }
+  .step .t { font-size: 14.5px; font-weight: 700; margin-top: 6px; letter-spacing: -.01em; }
+  .step .d { font-size: 12.5px; color: var(--dim); margin-top: 2px; line-height: 1.35; }
+  .step .go { font-size: 12.5px; color: var(--faint); margin-top: 6px; }
 
-  .shot { padding: 64px 0 8px; }
+  /* The four steps are the loop — the product's whole promise. These two are
+     worth finding but are not steps, so they sit under it, quieter. */
+  .loop-more {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px;
+    margin-top: 16px; font-size: 12.5px;
+  }
+  .loop-more a { color: var(--faint); text-decoration: none; border-bottom: 1px solid transparent; }
+  .loop-more a:hover, .loop-more a:focus-visible { color: var(--accent); border-bottom-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+
+  .cta {
+    display: inline-flex; align-items: center; gap: 8px; margin-top: 28px;
+    text-decoration: none; border-radius: 99px; padding: 15px 26px;
+    font-size: 15px; font-weight: 700; color: var(--on-accent);
+    background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+    box-shadow: 0 8px 28px color-mix(in srgb, var(--accent-deep) 40%, transparent);
+  }
+  .cta-note { font-size: 12.5px; color: var(--faint); margin-top: 12px; }
+
+  /* ------------------------------------------------------------ sections */
+  .shot { padding: 72px 0 8px; scroll-margin-top: 24px; }
   .shot-head { text-align: center; margin-bottom: 26px; }
   .shot-head .ctx {
-    font-size: 11.5px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
-    color: var(--faint);
+    font-size: 11.5px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--faint);
   }
   .shot-head .ctx b { color: var(--accent); font-weight: 700; }
-  .shot-head h2 { font-size: 26px; font-weight: 800; letter-spacing: -.025em; margin-top: 8px; text-wrap: balance; }
-  .shot-head p { font-size: 14.5px; color: var(--dim); max-width: 46ch; margin: 10px auto 0; text-wrap: pretty; }
+  .shot-head h2 { font-size: 27px; font-weight: 800; letter-spacing: -.03em; margin-top: 8px; text-wrap: balance; }
+  .shot-head p { font-size: 15px; color: var(--dim); max-width: 48ch; margin: 12px auto 0; text-wrap: pretty; }
+  .shot-head p strong { color: var(--text); font-weight: 600; }
+  .stage { display: flex; justify-content: center; gap: 28px; flex-wrap: wrap; align-items: flex-start; }
 
-  .stage { display: flex; justify-content: center; }
+  /* The friends section shows two phones: what ships, and what it becomes.
+     The sketch is dashed and tagged so it can never be read as a screenshot. */
+  /* Two phones, each labelled, so the sketch can never be read as a screenshot. */
+  @media (min-width: 920px) {
+    .stage.duo { width: 880px; margin-left: calc(50% - 440px); }
+  }
+  .pane { position: relative; padding: 30px 10px 10px; border: 1px solid transparent; border-radius: 60px; }
+  .pane.sketch { border-style: dashed; border-color: color-mix(in srgb, var(--accent) 30%, transparent); }
+  .pane.sketch .phone { opacity: .92; }
+  .pane-tag {
+    position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+    font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+    background: var(--page); padding: 0 10px; white-space: nowrap; color: var(--accent);
+  }
+  .pane-tag.now { color: var(--confident); }
+  .stage-note {
+    max-width: 52ch; margin: 22px auto 0; text-align: center;
+    font-size: 13px; color: var(--faint); line-height: 1.5; text-wrap: pretty;
+  }
 
+  .avatar {
+    width: 32px; height: 32px; border-radius: 99px; flex-shrink: 0;
+    display: grid; place-items: center;
+    font-size: 13px; font-weight: 700; color: var(--on-accent);
+  }
+  .livepill {
+    display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0;
+    font-size: 11px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase;
+    padding: 4px 11px; border-radius: 99px; color: var(--confident);
+    background: color-mix(in srgb, var(--confident) 9%, transparent);
+    border: 1px solid color-mix(in srgb, var(--confident) 30%, transparent);
+  }
+  .livepill .dot { width: 6px; height: 6px; border-radius: 99px; background: var(--confident); }
+
+  /* One list style for everything the page asserts — under each screen, and
+     in the privacy card. A green tick means "this is in your hands today";
+     the accent arrow (.soon) means "this is the sketch", so the two can never
+     be mistaken for each other. */
+  .claims {
+    margin: 26px auto 0; max-width: 52ch;
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--radius-card); padding: 4px 22px;
+  }
+  .claims li {
+    position: relative; padding: 14px 2px 14px 28px;
+    font-size: 14px; color: var(--dim); line-height: 1.5; text-wrap: pretty;
+  }
+  .claims li + li { border-top: 1px solid var(--line); }
+  .claims li::before {
+    content: "✓"; position: absolute; left: 2px; top: 14px;
+    color: var(--confident); font-weight: 700;
+  }
+  .claims.soon li::before { content: "→"; color: var(--accent); }
+  .claims b { color: var(--text); font-weight: 600; }
+  .claims em { font-style: italic; color: var(--faint); }
+
+  /* -------------------------------------------------------- phone chrome */
+  /* A real iPhone is 390pt across, and every size inside these frames is the
+     app's own point value. Rather than squeeze the layout on a narrow screen
+     — which would truncate rows the app doesn't truncate — scale the whole
+     frame down and keep the proportions exact. The min() is the fallback for
+     anything that doesn't support zoom. */
   .phone {
     width: min(390px, calc(100vw - 28px));
-    background: var(--bg);
-    border-radius: 50px;
+    background: var(--bg); border-radius: 50px;
     border: 1px solid rgba(255,255,255,.14);
     box-shadow: 0 30px 80px rgba(0,0,0,.6), 0 0 0 9px #050507;
-    position: relative; overflow: hidden;
-    display: flex; flex-direction: column;
+    position: relative; overflow: hidden; display: flex; flex-direction: column;
   }
+  @media (max-width: 429px) { .phone { zoom: .90; width: 390px; } }
+  @media (max-width: 399px) { .phone { zoom: .85; width: 390px; } }
+  @media (max-width: 374px) { .phone { zoom: .80; width: 390px; } }
+  @media (max-width: 340px) { .phone { zoom: .70; width: 390px; } }
   .island {
     position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
     width: 118px; height: 32px; border-radius: 99px;
     background: #000; border: 1px solid rgba(255,255,255,.07); z-index: 30;
-    display: flex; align-items: center;
-  }
-  .island .live-dot {
-    margin-left: auto; margin-right: 10px;
-    width: 8px; height: 8px; border-radius: 99px; background: var(--confident);
-    box-shadow: 0 0 6px rgba(52,211,153,.9);
   }
   .statusbar {
-    height: 56px; flex-shrink: 0;
-    display: flex; align-items: flex-end; justify-content: space-between;
-    padding: 0 30px 6px; font-size: 14px; font-weight: 600;
+    height: 54px; flex-shrink: 0; display: flex; align-items: flex-end; justify-content: space-between;
+    padding: 0 30px 4px; font-size: 14px; font-weight: 600;
   }
   .statusbar .right { color: var(--dim); font-size: 12px; }
-  .screen { padding: 8px 18px 26px; }
-  .screen.with-tabs { padding-bottom: 112px; }
-
-  .h-large { font-size: 28px; font-weight: 800; letter-spacing: -.03em; }
-  .h-sub { font-size: 14px; color: var(--dim); margin-top: 4px; }
-
-  .chip {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: var(--surface); border: 1px solid var(--line);
-    border-radius: 99px; padding: 6px 12px;
-    font-size: 12.5px; color: var(--dim); font-weight: 500;
+  .screen { padding: 4px var(--space-l) var(--space-xl); }
+  .screen.with-tabs { padding-bottom: var(--space-xl); }
+  .navbar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 2px 0 10px; font-size: 17px; font-weight: 600;
   }
-  .chip.accent { color: var(--accent); border-color: rgba(167,139,250,.35); }
+  .navbar .back, .navbar .more { color: var(--dim); font-size: 17px; width: 24px; }
+  .navbar .more { text-align: right; }
+  .navbar .title { flex: 1; text-align: center; }
+
+  /* ----------------------------------------------------------- app atoms */
+  .t-hlarge  { font: var(--font-h-large)/1.12 var(--sans); letter-spacing: -.03em; }
+  .t-hmedium { font: var(--font-h-medium)/1.15 var(--sans); letter-spacing: -.02em; }
+  .t-hsub    { font: var(--font-h-sub)/1.35 var(--sans); color: var(--dim); }
+  .t-title   { font: var(--font-track-title)/1.25 var(--sans); }
+  .t-sub     { font: var(--font-track-sub)/1.3 var(--sans); color: var(--dim); }
+  .t-time    { font: var(--font-time)/1 var(--sans); font-variant-numeric: tabular-nums; color: var(--faint); }
+
+  /* Only the label itself is uppercased in the app — the trailing action is not. */
+  .section-label {
+    display: flex; align-items: center; gap: var(--space-s);
+    font: var(--font-section-label)/1 var(--sans); letter-spacing: .8px;
+    color: var(--faint); padding: var(--space-xl) 0 var(--space-m);
+  }
+  .section-label > span:first-child { text-transform: uppercase; }
+  .section-label .count {
+    background: var(--surface-raised); border-radius: 99px; padding: 2px 9px;
+    font-size: 11px; color: var(--dim); letter-spacing: 0;
+  }
+  .section-label .act { margin-left: auto; display: flex; gap: var(--space-m); color: var(--accent); }
+  .section-label .act.plain { font: 600 12px/1 var(--sans); letter-spacing: 0; }
 
   .card {
     background: var(--surface); border: 1px solid var(--line);
-    border-radius: 20px; padding: 16px;
+    border-radius: var(--radius-card); padding: var(--space-l);
   }
+  .card.rows { padding: var(--space-m); }
+  .card.rows > .row + .row { border-top: .5px solid var(--line); }
+  .card.amber { border-color: color-mix(in srgb, var(--review) 30%, transparent); }
+  .card.red   { border-color: color-mix(in srgb, var(--unknown) 25%, transparent); }
+
+  .chiprow { display: flex; gap: var(--space-s); overflow: hidden; padding-top: var(--space-m); }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 99px;
+    padding: 6px 12px; font: var(--font-chip)/1.2 var(--sans); color: var(--dim);
+  }
+  .dot { width: 8px; height: 8px; border-radius: 99px; flex-shrink: 0; }
+  .dot.g { background: var(--confident); box-shadow: 0 0 4px color-mix(in srgb, var(--confident) 60%, transparent); }
+  .dot.a { background: var(--review);    box-shadow: 0 0 4px color-mix(in srgb, var(--review) 60%, transparent); }
+  .dot.u { background: var(--unknown);   box-shadow: 0 0 4px color-mix(in srgb, var(--unknown) 60%, transparent); }
+
+  .pill {
+    display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0;
+    font-size: 11px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase;
+    padding: 4px 11px; border-radius: 99px;
+  }
+  .pill.amber { color: var(--review);    background: color-mix(in srgb, var(--review) 9%, transparent);    border: 1px solid color-mix(in srgb, var(--review) 30%, transparent); }
+  .pill.green { color: var(--confident); background: color-mix(in srgb, var(--confident) 9%, transparent); border: 1px solid color-mix(in srgb, var(--confident) 30%, transparent); }
+
+  .art {
+    width: 44px; height: 44px; border-radius: var(--radius-art); flex-shrink: 0;
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+    background-size: cover; background-position: center;
+  }
+  .art.q {
+    background: color-mix(in srgb, var(--unknown) 18%, transparent);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--unknown); font: var(--font-track-title)/1 var(--sans);
+  }
+  .art.amber { background: color-mix(in srgb, var(--review) 15%, transparent); }
+
+  .row { display: flex; align-items: center; gap: var(--space-m); padding: var(--space-s) 0; }
+  .row .meta { flex: 1; min-width: 0; }
+  .row .meta .t { font: var(--font-track-title)/1.25 var(--sans); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row .meta .s {
+    font: var(--font-track-sub)/1.3 var(--sans); color: var(--dim); margin-top: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .row .idx { font: var(--font-time)/1 var(--sans); color: var(--faint); width: 22px; text-align: right; font-variant-numeric: tabular-nums; }
+  .row .stamp { font: var(--font-time)/1 var(--sans); color: var(--faint); font-variant-numeric: tabular-nums; width: 38px; text-align: right; }
+
+  /* confidence bubble — fill only, no border (ListenCard / catch sheet) */
+  .bubble { flex-shrink: 0; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 99px; }
+  .bubble.amber { color: var(--review);  background: color-mix(in srgb, var(--review) 12%, transparent); }
+  .bubble.faint { color: var(--faint);   background: color-mix(in srgb, var(--text) 8%, transparent); }
+
+  .circ {
+    width: 30px; height: 30px; border-radius: 99px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--surface-raised); color: var(--dim); font-size: 13px; line-height: 1;
+  }
+  .circ.on { color: var(--accent); font-size: 15px; }
 
   .btn {
     display: flex; align-items: center; justify-content: center; gap: 8px;
-    border: none; border-radius: 99px;
-    font-family: inherit; font-size: 15px; font-weight: 700;
-    padding: 15px 22px; width: 100%;
-    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%);
-    color: #0b0618;
-    box-shadow: 0 8px 28px rgba(139,92,246,.35);
+    border: none; border-radius: 99px; font-family: inherit;
+    font: var(--font-track-title)/1 var(--sans); padding: 16px 20px; width: 100%;
+    background: linear-gradient(135deg, var(--accent), var(--accent-deep)); color: var(--on-accent);
   }
-  .btn.secondary { background: var(--surface-2); color: var(--text); box-shadow: none; border: 1px solid var(--line); }
-  .btn.ghost { background: transparent; color: var(--dim); box-shadow: none; border: 1px solid var(--line); font-weight: 600; }
-  .btn.small { width: auto; padding: 9px 15px; font-size: 13px; }
+  .btn.raised  { background: var(--surface-raised); color: var(--text); }
+  .btn.outline { background: transparent; color: var(--dim); border: 1px solid var(--line); }
+  .btn.small   { font: 600 13.5px/1 var(--sans); padding: 11px 14px; }
+  .btn-note { font-size: 10.5px; color: var(--faint); text-align: center; margin-top: 6px; }
+  .btn-note.warn { color: var(--review); }
 
-  .dot { width: 8px; height: 8px; border-radius: 99px; display: inline-block; flex-shrink: 0; }
-  .dot.g { background: var(--confident); box-shadow: 0 0 8px rgba(52,211,153,.6); }
-  .dot.a { background: var(--review);    box-shadow: 0 0 8px rgba(251,191,36,.55); }
-  .dot.u { background: var(--unknown);   box-shadow: 0 0 8px rgba(232,121,249,.6); }
-
-  .art {
-    width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
-    background: linear-gradient(135deg, #3b2f63, #1c2a4a);
-    border: 1px solid rgba(255,255,255,.08);
+  .clip-pill {
+    display: flex; align-items: center; justify-content: center; flex: 1;
+    font: 600 13.5px/1 var(--sans); color: var(--dim);
+    border: 1px solid var(--line); border-radius: 99px; padding: 11px 8px;
   }
-  .art.a2 { background: linear-gradient(135deg, #14532d, #164e63); }
-  .art.a3 { background: linear-gradient(135deg, #7f1d4d, #4c1d95); }
-  .art.a4 { background: linear-gradient(135deg, #78350f, #451a03); }
-  .art.unknown {
-    background:
-      radial-gradient(circle at 30% 30%, rgba(232,121,249,.5), transparent 60%),
-      linear-gradient(135deg, #2e1065, #0f172a);
-    display: flex; align-items: center; justify-content: center;
-    color: var(--unknown); font-weight: 800; font-size: 17px;
+  .timeline .bar { display: flex; gap: 2px; height: 44px; border-radius: 10px; overflow: hidden; }
+  .timeline .seg { border-radius: 3px; }
+  .timeline .seg.g { background: linear-gradient(180deg, color-mix(in srgb, var(--confident) 85%, transparent), color-mix(in srgb, var(--confident) 35%, transparent)); }
+  .timeline .seg.a { background: linear-gradient(180deg, color-mix(in srgb, var(--review) 85%, transparent),    color-mix(in srgb, var(--review) 30%, transparent)); }
+  .timeline .seg.u { background: linear-gradient(180deg, color-mix(in srgb, var(--unknown) 90%, transparent),   color-mix(in srgb, var(--unknown) 35%, transparent)); }
+  .timeline .seg.q { background: rgba(255,255,255,.07); }
+  .timeline .ticks {
+    display: flex; justify-content: space-between; margin-top: 6px;
+    font-size: 10.5px; color: var(--faint); font-variant-numeric: tabular-nums;
   }
-
-  .track-row { display: flex; align-items: center; gap: 12px; padding: 10px 4px; border-bottom: 1px solid var(--line); }
-  .track-row:last-of-type { border-bottom: none; }
-  .track-row .meta { flex: 1; min-width: 0; }
-  .track-row .meta .t { font-size: 14.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .track-row .meta .s { font-size: 12.5px; color: var(--dim); margin-top: 2px; }
-  .track-row .time { font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; }
-
-  .avatar {
-    width: 32px; height: 32px; border-radius: 99px; flex-shrink: 0;
-    border: 2px solid var(--bg);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 12px; font-weight: 700; color: #0b0618;
+  .scrubchip {
+    position: absolute; left: 50%; transform: translateX(-46%); bottom: calc(100% + 8px); z-index: 5;
+    display: flex; align-items: center; gap: var(--space-s); max-width: 240px;
+    background: var(--surface-raised); border: 1px solid var(--line); border-radius: var(--radius-art);
+    padding: 8px 12px; box-shadow: 0 4px 10px rgba(0,0,0,.35);
   }
-  .avatar.p1 { background: #a78bfa; } .avatar.p2 { background: #34d399; }
-  .avatar.p3 { background: #fbbf24; } .avatar.p4 { background: #f472b6; }
-  .avatar-stack { display: flex; }
-  .avatar-stack .avatar + .avatar { margin-left: -9px; }
-
-  .section-label {
-    display: flex; align-items: center; gap: 8px;
-    font-size: 12px; font-weight: 700; letter-spacing: .06em;
-    text-transform: uppercase; color: var(--faint);
-    margin: 24px 2px 10px;
+  .scrubchip .t { font: 600 13.5px/1.2 var(--sans); white-space: nowrap; }
+  .scrubchip .s { font-size: 11px; color: var(--dim); margin-top: 1px; white-space: nowrap; }
+  .hero-listen { display: flex; flex-direction: column; align-items: center; gap: var(--space-m); padding-top: var(--space-l); }
+  .disc-stack { position: relative; width: 190px; height: 190px; display: grid; place-items: center; }
+  .ring {
+    position: absolute; width: 130px; height: 130px; border-radius: 99px;
+    border: 1.5px solid color-mix(in srgb, var(--accent) 45%, transparent); opacity: 0;
   }
-  .section-label .count { background: var(--surface-2); border-radius: 99px; padding: 2px 9px; font-size: 11px; color: var(--dim); letter-spacing: 0; }
-  .section-label .bulk { margin-left: auto; display: flex; gap: 12px; letter-spacing: 0; text-transform: none; }
-  .section-label .bulk span { color: var(--accent); font-size: 12px; font-weight: 600; }
-
-  .state-pill {
-    display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
-    font-size: 11px; font-weight: 700; letter-spacing: .05em;
-    padding: 4px 11px; border-radius: 99px; text-transform: uppercase;
+  .disc {
+    position: relative; width: 124px; height: 124px; border-radius: 99px;
+    background: linear-gradient(135deg, #c3adff, var(--accent) 45%, var(--accent-deep));
+    box-shadow: 0 0 40px color-mix(in srgb, var(--accent-deep) 50%, transparent);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
   }
-  .state-pill.to-review { color: var(--review); background: rgba(251,191,36,.1); border: 1px solid rgba(251,191,36,.3); }
-  .state-pill.done { color: var(--confident); background: rgba(52,211,153,.08); border: 1px solid rgba(52,211,153,.28); }
-
-  .save-ic {
-    width: 30px; height: 30px; border-radius: 99px; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-    background: var(--surface-2); border: 1px solid var(--line);
-    color: var(--dim); font-size: 15px; line-height: 1;
+  .disc::before, .disc::after {
+    content: ""; position: absolute; border-radius: 99px; border: 1px solid rgba(255,255,255,.12);
   }
-  .save-ic.saved { color: var(--accent); border-color: rgba(167,139,250,.4); }
+  .disc::before { inset: 13px; } .disc::after { inset: 26px; border-color: rgba(255,255,255,.08); }
+  .disc .lab { font-size: 15.5px; font-weight: 700; color: rgba(255,255,255,.96); }
+  .disc .sub { font-size: 8.7px; font-weight: 500; color: rgba(255,255,255,.58); margin-top: 3px; }
+  .hearing { display: flex; align-items: center; gap: 6px; font: var(--font-track-sub)/1.3 var(--sans); color: var(--dim); }
+  .hearing i { font-style: normal; color: var(--accent); }
 
-  .share-mini {
-    border-radius: 18px; padding: 20px 18px;
-    background:
-      radial-gradient(circle at 85% 8%, rgba(232,121,249,.28), transparent 55%),
-      radial-gradient(circle at 8% 95%, rgba(124,92,240,.4), transparent 60%),
-      #14101d;
-    border: 1px solid rgba(167,139,250,.32);
+  .livehead { display: flex; align-items: center; padding-top: var(--space-s); }
+  .livehead .live { display: inline-flex; align-items: center; gap: 6px; font: 700 12.5px/1 var(--sans); letter-spacing: .5px; color: var(--confident); }
+  .livehead .live .dot { background: var(--confident); box-shadow: 0 0 4px color-mix(in srgb, var(--confident) 70%, transparent); }
+  .livehead .elapsed { margin-left: auto; font: var(--font-time)/1 var(--sans); color: var(--dim); font-variant-numeric: tabular-nums; }
+
+  .banner {
+    display: flex; gap: var(--space-m); align-items: flex-start; margin-top: var(--space-m);
+    background: var(--surface); border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+    border-radius: var(--radius-cover); padding: var(--space-m);
   }
-  .share-mini .brand { font-size: 12px; font-weight: 800; letter-spacing: -.01em; }
-  .share-mini .brand em { font-style: normal; color: var(--accent); }
+  .banner .ic { color: var(--accent); font-size: 15px; line-height: 1.2; }
+  .banner .t { font: 600 12.5px/1.25 var(--sans); }
+  .banner .d { font-size: 11.5px; color: var(--dim); margin-top: 2px; line-height: 1.3; }
 
+  .dock {
+    border-top: .5px solid var(--line); background: var(--bg);
+    padding: var(--space-m) var(--space-l) var(--space-s);
+    display: flex; flex-direction: column; gap: var(--space-s);
+  }
+  .dock .pair { display: flex; gap: var(--space-m); }
+  .dock .note { font-size: 11.5px; color: var(--faint); text-align: center; line-height: 1.35; }
+
+  /* tab bar — icons mirror the SF Symbols the app uses */
   .tabbar {
-    position: absolute; bottom: 0; left: 0; right: 0; z-index: 20;
     display: flex; align-items: flex-end; justify-content: space-around;
-    padding: 10px 16px 22px;
-    background: rgba(8,8,12,.85); backdrop-filter: blur(18px);
-    border-top: 1px solid var(--line);
+    padding: var(--space-s) var(--space-l) 20px;
+    background: var(--bg); border-top: .5px solid var(--line);
   }
-  .tab { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; color: var(--faint); width: 60px; }
-  .tab .ic { font-size: 20px; line-height: 1; }
+  .tab {
+    display: flex; flex-direction: column; align-items: center; gap: var(--space-xs);
+    font: var(--font-tab)/1 var(--sans); color: var(--faint); flex: 1;
+  }
+  .tab svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.7; }
+  .tab .glyph { font-size: 21px; line-height: 22px; }
   .tab.active { color: var(--text); }
-  .tab.cap { transform: translateY(-13px); color: var(--accent); }
-  .tab.cap .ic {
-    width: 52px; height: 52px; border-radius: 99px;
-    display: flex; align-items: center; justify-content: center;
-    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%);
-    box-shadow: 0 8px 24px rgba(139,92,246,.5); font-size: 22px;
+  .tab.catch { color: var(--accent); transform: translateY(-8px); }
+  .tab.catch .puck {
+    width: 52px; height: 52px; border-radius: 99px; display: grid; place-items: center;
+    background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--accent-deep) 50%, transparent);
   }
+  .tab.catch .puck span { width: 16px; height: 16px; border-radius: 99px; background: rgba(255,255,255,.85); }
 
-  .listen-hero { display: flex; flex-direction: column; align-items: center; padding: 22px 0 8px; }
-  .pulse-wrap { position: relative; width: 180px; height: 180px; margin: 6px 0 16px; }
-  .pulse-ring { position: absolute; inset: 0; border-radius: 99px; border: 1.5px solid rgba(167,139,250,.5); opacity: 0; }
-  .pulse-core {
-    position: absolute; inset: 27px; border-radius: 99px;
-    background:
-      radial-gradient(circle at 32% 28%, rgba(232,121,249,.35), transparent 55%),
-      linear-gradient(135deg, #7c5cf0, #4c1d95);
-    box-shadow: 0 0 60px rgba(139,92,246,.45);
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  .muted { opacity: .4; }
+
+  /* ------------------------------------------------------- share artwork */
+  .cardframe { container-type: inline-size; width: 100%; margin: 0 auto; }
+  .sharecard {
+    width: 100%; max-width: 100%; min-width: 0; overflow: hidden;
+    aspect-ratio: 1200 / 560; padding: 4.33cqw;
+    border-radius: 2.4cqw; border: 1px solid var(--line);
+    background: radial-gradient(circle at 0% 0%, #2a1c55, #120b28 70%), #120b28;
+    display: flex; flex-direction: column;
   }
-  .eq { display: flex; gap: 4px; align-items: flex-end; height: 24px; }
-  .eq span { width: 5px; border-radius: 3px; background: rgba(255,255,255,.9); }
-  .eq span:nth-child(1){height:10px} .eq span:nth-child(2){height:21px} .eq span:nth-child(3){height:14px}
-  .eq span:nth-child(4){height:23px} .eq span:nth-child(5){height:11px}
-  .live { display: inline-flex; align-items: center; gap: 6px; color: var(--confident); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
-  .live::before { content: ""; width: 7px; height: 7px; border-radius: 99px; background: var(--confident); box-shadow: 0 0 8px rgba(52,211,153,.8); }
+  .sharecard .head { display: flex; align-items: center; gap: 1.4cqw; }
+  .sharecard .mark {
+    width: 3.67cqw; height: 3.67cqw; border-radius: 99px; display: grid; place-items: center;
+    background: linear-gradient(135deg, #b79dfc, var(--accent-deep));
+  }
+  .sharecard .mark span { width: 1.17cqw; height: 1.17cqw; border-radius: 99px; background: #f7f5ff; }
+  .sharecard .brand { font-size: 2.83cqw; font-weight: 700; color: var(--accent); letter-spacing: -.01em; }
+  .sharecard .when { margin-left: auto; font-size: 2.25cqw; color: color-mix(in srgb, var(--text) 40%, transparent); }
+  .sharecard .title { font-size: 5.17cqw; font-weight: 800; letter-spacing: -.02em; margin-top: 2.4cqw; }
+  .sharecard .counts { font-size: 2.5cqw; font-weight: 500; color: var(--dim); margin-top: .8cqw; }
+  .sharecard .bar { display: flex; gap: .33cqw; height: 4.67cqw; margin-top: auto; }
+  .sharecard .bar div { border-radius: .83cqw; }
+  .sharecard .clocks { display: flex; justify-content: space-between; margin-top: 1cqw; font-size: 2cqw; font-variant-numeric: tabular-nums; color: color-mix(in srgb, var(--text) 40%, transparent); }
+  .sharecard .tracks { font-size: 2.08cqw; color: var(--dim); margin-top: 1.4cqw; }
+  .sc-g { background: var(--confident); } .sc-a { background: var(--review); }
+  .sc-u { background: color-mix(in srgb, var(--unknown) 85%, transparent); }
+  .sc-q { background: color-mix(in srgb, var(--text) 8%, transparent); }
+
+  .statcard {
+    width: 100%; max-width: 100%; min-width: 0; overflow: hidden;
+    aspect-ratio: 1; padding: 5.9cqw; border-radius: 3cqw; border: 1px solid var(--line);
+    background: radial-gradient(circle at 0% 0%, #1a1038, #0b0618 70%), #0b0618;
+    display: flex; flex-direction: column;
+  }
+  .statcard .head { display: flex; align-items: center; gap: 1.6cqw; margin-bottom: 4cqw; }
+  .statcard .mark { width: 5.9cqw; height: 5.9cqw; border-radius: 99px; display: grid; place-items: center; background: linear-gradient(135deg, #b79dfc, var(--accent-deep)); }
+  .statcard .mark span { width: 1.85cqw; height: 1.85cqw; border-radius: 99px; background: #f7f5ff; }
+  .statcard .brand { font-size: 3.7cqw; font-weight: 700; color: color-mix(in srgb, var(--text) 85%, transparent); }
+  .statcard .since { margin-left: auto; font-size: 2.8cqw; color: color-mix(in srgb, var(--text) 40%, transparent); }
+  .statcard .body { display: flex; gap: 3cqw; flex: 1; min-height: 0; }
+  .statcard .tiles { display: flex; flex-direction: column; gap: 1.5cqw; width: 43.5cqw; flex-shrink: 0; min-height: 0; }
+  .statcard .tile {
+    flex: 1; border-radius: 2.6cqw; padding: 0 3cqw;
+    background: color-mix(in srgb, var(--text) 4.5%, transparent);
+    border: 2px solid color-mix(in srgb, var(--accent) 18%, transparent);
+    display: flex; align-items: baseline; gap: 2cqw;
+  }
+  .statcard .tile b { font-size: 7.8cqw; font-weight: 800; letter-spacing: -.02em; }
+  .statcard .tile span { font-size: 3.15cqw; font-weight: 500; color: color-mix(in srgb, var(--text) 60%, transparent); }
+  .statcard .mosaic { flex: 1; min-width: 0; display: flex; align-items: flex-end; gap: 1.4cqw; }
+  .statcard .mosaic i { flex: 1; min-width: 0; display: flex; flex-direction: column-reverse; gap: .28cqw; align-self: stretch; }
+  .statcard .mosaic i em { display: block; border-radius: .46cqw; flex-shrink: 0; }
+  .statcard .foot { font-size: 2.8cqw; font-weight: 600; color: color-mix(in srgb, var(--accent) 80%, transparent); margin-top: 3cqw; }
+
+  /* -------------------------------------------------------------- extras */
+  .next { margin-top: 22px; display: grid; gap: 8px; }
+  .next div {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-cover);
+    padding: 12px 14px; font-size: 13.5px; color: var(--dim); line-height: 1.4;
+  }
+  .next div b { color: var(--text); font-weight: 600; }
+
+  .privacy { margin: 76px 0 0; }
+  .privacy .card { padding: 24px 22px; }
+  .privacy h2 { font-size: 23px; font-weight: 800; letter-spacing: -.025em; text-align: center; text-wrap: balance; }
+  .privacy .sub { text-align: center; font-size: 14px; color: var(--dim); margin: 8px auto 18px; max-width: 42ch; }
+  .privacy .more { text-align: center; margin-top: 16px; font-size: 13px; }
+  .privacy .more a { color: var(--accent); }
+
+  .close { text-align: center; padding: 76px 0 0; }
+  .close h2 { font-size: 27px; font-weight: 800; letter-spacing: -.03em; text-wrap: balance; }
+  .close p { font-size: 15px; color: var(--dim); margin: 10px auto 0; max-width: 42ch; }
+
+  footer { text-align: center; padding: 56px 20px 76px; font-size: 12.5px; color: var(--faint); line-height: 1.6; }
+  footer .wordmark { font-size: 15px; display: block; margin-bottom: 8px; }
+  footer a { color: var(--faint); }
 
   @media (prefers-reduced-motion: no-preference) {
-    .pulse-ring { animation: pulse 3.2s ease-out infinite; }
-    .pulse-ring:nth-child(2) { animation-delay: 1.05s; }
-    .pulse-ring:nth-child(3) { animation-delay: 2.1s; }
-    .eq span { animation: eq 1.1s ease-in-out infinite; }
-    .eq span:nth-child(2){animation-delay:.15s} .eq span:nth-child(3){animation-delay:.3s}
-    .eq span:nth-child(4){animation-delay:.45s} .eq span:nth-child(5){animation-delay:.6s}
-    .live::before { animation: blink 1.6s ease-in-out infinite; }
-    .island .live-dot { animation: blink 1.6s ease-in-out infinite; }
+    .ring { animation: ripple 3.2s ease-out infinite; }
+    .ring:nth-of-type(2) { animation-delay: 1.05s; }
+    .ring:nth-of-type(3) { animation-delay: 2.1s; }
+    .livehead .live .dot { animation: breathe 1.8s ease-in-out infinite; }
   }
-  @keyframes pulse { 0% { transform: scale(.62); opacity: .9; } 100% { transform: scale(1.22); opacity: 0; } }
-  @keyframes eq { 50% { transform: scaleY(.45); } }
-  @keyframes blink { 50% { opacity: .35; } }
-
-  .timeline .bar { display: flex; gap: 2px; height: 42px; border-radius: 10px; overflow: hidden; }
-  .timeline .seg { flex: 1; border-radius: 3px; opacity: .9; }
-  .timeline .seg.g { background: linear-gradient(180deg, rgba(52,211,153,.85), rgba(52,211,153,.35)); }
-  .timeline .seg.a { background: linear-gradient(180deg, rgba(251,191,36,.85), rgba(251,191,36,.3)); }
-  .timeline .seg.u { background: linear-gradient(180deg, rgba(232,121,249,.9), rgba(232,121,249,.35)); }
-  .timeline .seg.q { background: rgba(255,255,255,.07); }
-  .timeline .ticks { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--faint); margin-top: 6px; font-variant-numeric: tabular-nums; }
-
-  .confidence { font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 99px; flex-shrink: 0; }
-  .confidence.mid { color: var(--review); background: rgba(251,191,36,.12); }
-  .row-actions { display: flex; gap: 8px; margin-top: 12px; }
-  .row-actions .btn { padding: 10px; font-size: 13px; flex: 1; }
-
-  .who { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-  .who .meta { flex: 1; } .who .n { font-size: 14px; font-weight: 700; }
-  .who .w { font-size: 12px; color: var(--dim); margin-top: 1px; }
-  .who .ago { font-size: 11.5px; color: var(--faint); }
-
-  .ask { margin: 72px 0 0; }
-  .ask .card { padding: 26px 22px; }
-  .ask h2 { font-size: 24px; font-weight: 800; letter-spacing: -.025em; text-align: center; text-wrap: balance; }
-  .ask p.sub { text-align: center; font-size: 14px; color: var(--dim); margin: 8px auto 20px; max-width: 44ch; }
-  .q { display: flex; gap: 14px; padding: 14px 4px; border-top: 1px solid var(--line); }
-  .q .qn {
-    width: 28px; height: 28px; border-radius: 99px; flex-shrink: 0;
-    background: rgba(167,139,250,.14); color: var(--accent);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 13px; font-weight: 800;
-  }
-  .q .qt { font-size: 15px; font-weight: 600; padding-top: 3px; text-wrap: pretty; }
-  .q .qt small { display: block; font-weight: 400; font-size: 13px; color: var(--dim); margin-top: 2px; }
-
-  footer { text-align: center; padding: 56px 20px 72px; font-size: 12.5px; color: var(--faint); }
-  footer .wordmark { font-size: 15px; display: block; margin-bottom: 8px; }
+  @keyframes ripple  { 0% { transform: scale(.8); opacity: .8; } 100% { transform: scale(1.45); opacity: 0; } }
+  @keyframes breathe { 50% { opacity: .3; } }
 </style>
 
 <div class="wrap">
 
+    <div class="langbar">
+    <button class="lang" data-lang="en" aria-pressed="true">English</button>
+    <button class="lang" data-lang="es" lang="es" aria-pressed="false">Español</button>
+  </div>
+
   <section class="hero" data-slice="1">
     <span class="wordmark"><em>Catchy</em></span><br>
-    <span class="eyebrow">friends &amp; family alpha · on TestFlight</span>
-    <h1>Every set becomes a playlist.</h1>
-    <p class="lede">
-      You know the problem: incredible set, and by the time you're home the
-      music is gone — Shazam under a strobe light 30 times is not a plan.
-      <strong>Catchy</strong> listens for you: one tap when the music starts,
-      phone in your pocket, and when it's over the whole set is a playlist.
-      One person captures; the whole crew gets it.
+    <span class="eyebrow" data-t="hero.eyebrow">friends &amp; family alpha · on TestFlight</span>
+    <h1 data-t="hero.h1">Know every song that played.</h1>
+    <p class="lede" data-t="hero.lede">
+      Wherever the music is coming from — a DJ, a bar, a party, someone
+      else's aux — start <strong>Catchy</strong> when it starts. It listens
+      along and names what it hears, hour after hour, and is honest about
+      the bits it couldn't. Afterwards the whole thing is yours: a tracklist,
+      a timeline of what played, and a playlist to send your friends.
     </p>
+    <p class="versus" data-t="hero.versus">Shazam catches <b>one song</b>. Catchy catches <b>everything that played</b>.</p>
 
-    <div class="loop">
-      <div class="step"><div class="n">1</div><div class="t">Capture</div><div class="d">one tap when it starts, then forget it</div></div>
-      <div class="step"><div class="n">2</div><div class="t">Review</div><div class="d">later, coffee in hand</div></div>
-      <div class="step"><div class="n">3</div><div class="t">Playlist</div><div class="d">one tap to Spotify</div></div>
-      <div class="step"><div class="n">4</div><div class="t">Share</div><div class="d">one set, everyone on it</div></div>
-    </div>
+    <nav class="loop">
+      <a class="step" href="#catch">
+        <div class="n">1</div><div class="t" data-t="step1.t">Catch</div>
+        <div class="d" data-t="step1.d">one tap when the music starts</div><div class="go" data-t="step.go">see it →</div>
+      </a>
+      <a class="step" href="#review">
+        <div class="n">2</div><div class="t" data-t="step2.t">Review</div>
+        <div class="d" data-t="step2.d">settle the maybes, whenever</div><div class="go" data-t="step.go">see it →</div>
+      </a>
+      <a class="step" href="#playlist">
+        <div class="n">3</div><div class="t" data-t="step3.t">Playlist</div>
+        <div class="d" data-t="step3.d">Spotify or Apple Music</div><div class="go" data-t="step.go">see it →</div>
+      </a>
+      <a class="step" href="#share">
+        <div class="n">4</div><div class="t" data-t="step4.t">Share</div>
+        <div class="d" data-t="step4.d">a card of the set, for the chat</div><div class="go" data-t="step.go">see it →</div>
+      </a>
+    </nav>
 
+    <nav class="loop-more">
+      <a href="#friends" data-t="more.friends">Friends — what's coming next</a>
+      <a href="#you" data-t="more.you">Your profile</a>
+      <a href="#privacy" data-t="more.privacy">What it keeps</a>
+    </nav>
+
+    <a class="cta" href="https://testflight.apple.com/join/hEEk8fKf" data-t="cta">Join the alpha on TestFlight →</a>
+    <p class="cta-note" data-t="cta.note">iPhone · iOS 17.2 or newer · nothing to sign up for</p>
   </section>
 
-  <!-- 2 · capture -->
-  <section class="shot" data-slice="2">
+    <section class="shot" id="catch" data-slice="2">
     <div class="shot-head">
-      <div class="ctx"><b>1:34 am</b> · at the club</div>
-      <h2>Listening mode</h2>
-      <p>This screen stays in your pocket. It IDs tracks the whole set, knows
-         when it isn't sure, and pauses itself if you film a video. Audio is
-         matched and discarded on the spot — never recorded.</p>
+      <div class="ctx" data-t="catch.ctx">step <b>1</b> · while the music is playing</div>
+      <h2 data-t="catch.h2">Start it once, then tap for what matters.</h2>
+      <p data-t="catch.p"><strong>Tap the disc for any song you have to have</strong> — that's
+         the catch that always lands, and it works straight from the lock
+         screen without unlocking. In between, leave the phone where it can
+         hear and it keeps adding what it can pick up on its own. Anything it
+         can't name is still marked, with the moment saved, so nothing
+         disappears quietly.</p>
     </div>
     <div class="stage">
-      <div class="phone">
-        <div class="island"><span class="live-dot"></span></div>
+      <div class="phone" lang="en">
+        <div class="island"></div>
         <div class="statusbar"><span>1:34</span><span class="right">◧ 71%</span></div>
         <div class="screen">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
-            <span class="chip">📍 Nowadays · Brooklyn</span>
-            <span class="chip" style="font-variant-numeric:tabular-nums;">⏺ 3:12:44</span>
+
+          <div class="livehead">
+            <span class="live"><span class="dot"></span>LIVE</span>
+            <span class="elapsed">3:12:44</span>
           </div>
-          <div class="listen-hero">
-            <div class="pulse-wrap">
-              <div class="pulse-ring"></div><div class="pulse-ring"></div><div class="pulse-ring"></div>
-              <div class="pulse-core">
-                <div class="eq"><span></span><span></span><span></span><span></span><span></span></div>
-                <div style="font-size:13px; font-weight:700; opacity:.95;">Tap to catch</div>
-                <div style="font-size:9.5px; font-weight:500; opacity:.55; margin-top:2px;">always listening</div>
+
+          <div class="banner">
+            <span class="ic">◔</span>
+            <div>
+              <div class="t">Hard to hear in here</div>
+              <div class="d">15 seconds out of the pocket catches more</div>
+            </div>
+          </div>
+
+          <div class="hero-listen">
+            <div class="disc-stack">
+              <span class="ring"></span><span class="ring"></span><span class="ring"></span>
+              <div class="disc">
+                <div class="lab">Tap to catch</div>
+                <div class="sub">always listening</div>
               </div>
             </div>
-            <div class="h-large" style="font-size:23px;">32 tracks caught</div>
-            <div class="h-sub">pocket catches are best-effort — tap for the songs that matter</div>
+            <div class="t-hmedium">32 tracks caught</div>
+            <div class="hearing"><i>♪</i><span>In This Bih' — still playing</span></div>
           </div>
-          <div class="section-label">caught this set <span class="count">32</span></div>
-          <div class="card" style="padding:6px 14px;">
-            <div class="track-row">
-              <div class="art unknown">?</div>
-              <div class="meta"><div class="t" style="color:var(--unknown);">Unknown</div><div class="s">nothing matched here</div></div>
-              <span class="dot u"></span><span class="time">1:34</span>
+
+          <div class="section-label">
+            <span>Caught this set</span>
+            <span class="act">+ add</span>
+          </div>
+          <div class="card rows">
+            <div class="row">
+              <div class="art q">?</div>
+              <div class="meta">
+                <div class="t" style="color: var(--unknown);">Unknown</div>
+                <div class="s">nothing matched here</div>
+              </div>
+              <span class="dot u"></span><span class="stamp">1:34</span>
             </div>
-            <div class="track-row">
-              <div class="art" style="background:url(art/onb-inthisbih.jpg) center/cover;"></div>
+            <div class="row">
+              <div class="art" style="background-image: url(art/onb-inthisbih.jpg);"></div>
               <div class="meta"><div class="t">In This Bih'</div><div class="s">Chris Lorenzo &amp; Kah-Lo</div></div>
-              <span class="dot g"></span><span class="time">1:31</span>
+              <span class="dot g"></span><span class="stamp">1:31</span>
             </div>
-            <div class="track-row">
-              <div class="art" style="background:url(art/onb-palm.jpg) center/cover;"></div>
+            <div class="row">
+              <div class="art" style="background-image: url(art/onb-palm.jpg);"></div>
               <div class="meta"><div class="t">palm of my hands (Odd Mob Remix)</div><div class="s">John Summit &amp; venbee</div></div>
-              <span class="dot a"></span><span class="time">1:26</span>
+              <span class="dot a"></span><span class="stamp">1:26</span>
             </div>
-          </div>
-          <div class="section-label">on this set
-            <span class="bulk"><span>+ invite</span></span>
-          </div>
-          <div class="card" style="display:flex; align-items:center; gap:12px;">
-            <div class="avatar-stack"><div class="avatar p2">D</div><div class="avatar p3">M</div><div class="avatar p4">P</div></div>
-            <div style="flex:1; font-size:13px; color:var(--dim); line-height:1.4;">
-              <strong style="color:var(--text);">Dana</strong> is capturing too ·
-              <strong style="color:var(--text);">Marcus &amp; Priya</strong> joined for the playlist
-            </div>
-            <span class="live">live</span>
-          </div>
-          <div style="margin-top:22px; display:flex; flex-direction:column; gap:10px;">
-            <div style="display:flex; gap:10px;">
-              <button class="btn secondary" style="flex:1;">❚❚ Pause</button>
-              <button class="btn ghost" style="flex:1;">End set</button>
-            </div>
-            <div style="text-align:center; font-size:11.5px; color:var(--faint);">
-              matched live, audio discarded — short clips kept only for unmatched moments · ~5% battery/hr
+            <div class="row">
+              <div class="art" style="background-image: url(art/onb-carcrash.jpg);"></div>
+              <div class="meta"><div class="t">car crash</div><div class="s">jigitz</div></div>
+              <span class="dot g"></span><span class="stamp">1:19</span>
             </div>
           </div>
         </div>
+
+        <div class="dock">
+          <div class="pair">
+            <button class="btn raised">❚❚ Pause</button>
+            <button class="btn outline">End set</button>
+          </div>
+          <div class="note">
+            <span>pocket catches are best-effort — tap for the songs that matter.</span><br>
+            <span>audio is matched live, never stored</span>
+          </div>
+        </div>
+
+        <div class="tabbar">
+          <span class="tab"><span class="glyph">♫</span>Library</span>
+          <span class="tab">
+            <svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M6.5 7.5h11M9 4.8h6"/></svg>
+            Sets
+          </span>
+          <span class="tab catch"><span class="puck"><span></span></span>Catch</span>
+          <span class="tab">
+            <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.4 19.2c.6-3 2.9-4.7 5.6-4.7s5 1.7 5.6 4.7"/><circle cx="17.3" cy="8.6" r="2.6"/><path d="M16 14.7c2.3-.2 4.2 1.4 4.7 4.1"/></svg>
+            Friends
+          </span>
+          <span class="tab">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="9.6" r="3"/><path d="M5.9 19a6.6 6.6 0 0 1 12.2 0"/></svg>
+            Profile
+          </span>
+        </div>
       </div>
     </div>
+
+    <ul class="claims">
+      <li data-t="catch.c1"><b>It keeps going with the screen off.</b> Lock the phone, use other
+        apps — the set keeps running, and it says so on your lock screen. Film a
+        video and the camera takes the microphone, so the set parks itself and
+        picks back up when you come back.</li>
+      <li data-t="catch.c2"><b>There's a <em>Catch now</em> button on the lock screen.</b> Hear something
+        you need the name of, press it without unlocking, and roughly fifteen
+        seconds later it has an answer.</li>
+      <li data-t="catch.c3"><b>No signal is fine.</b> It keeps collecting and names everything
+        the moment you're back online — <em>No service — still capturing</em>.</li>
+      <li data-t="catch.c4"><b>When it misses, it says so</b> — <em>too muffled to name — try it out of your pocket</em>
+        — instead of pretending it heard nothing.</li>
+    </ul>
   </section>
 
-  <!-- 3 · review -->
-  <section class="shot" data-slice="3">
+    <section class="shot" id="review" data-slice="3">
     <div class="shot-head">
-      <div class="ctx"><b>10:42 am</b> · next morning</div>
-      <h2>Get the music back</h2>
-      <p>The sure tracks are already in. For the maybes, you hear the exact
-         15 seconds your phone caught — or just tap "keep all". Finish, and
-         the set is yours.</p>
+      <div class="ctx" data-t="review.ctx">step <b>2</b> · whenever you get to it</div>
+      <h2 data-t="review.h2">Settle the maybes in a minute.</h2>
+      <p data-t="review.p">The sure things are already in the playlist. For everything it was
+         only half-sure about, <strong>you hear the exact seconds your phone
+         caught</strong> and keep it or drop it — or hit <em>keep all</em> and be done.
+         Moments it couldn't name are tucked at the bottom, honestly labelled,
+         with the clip kept in case you want to hunt the ID later.</p>
     </div>
     <div class="stage">
-      <div class="phone">
+      <div class="phone" lang="en">
         <div class="island"></div>
-        <div class="statusbar"><span>10:42</span><span class="right">◧ 100%</span></div>
+        <div class="statusbar"><span>11:06</span><span class="right">◧ 96%</span></div>
         <div class="screen with-tabs">
-          <div style="margin-top:4px;">
-            <div class="h-sub" style="margin:0 0 2px;">Last night · Sat, Jul 4</div>
-            <div style="display:flex; align-items:center; gap:10px;">
-              <div class="h-large">Nowadays</div>
-              <span class="state-pill to-review">needs review</span>
-            </div>
-            <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;">
-              <span class="chip">4h 12m</span>
-              <span class="chip"><span class="dot g"></span> 29 confident</span>
-              <span class="chip"><span class="dot a"></span> 6 to review</span>
-              <span class="chip accent"><span class="dot u"></span> 3 unknown</span>
-            </div>
+
+          <div class="navbar">
+            <span class="back">‹</span>
+            <span class="title">Review</span>
+            <span class="more">⋯</span>
           </div>
-          <div class="section-label">your set</div>
+
+          <div class="t-hsub">Saturday, Jul 18</div>
+          <div style="display:flex; align-items:center; gap:var(--space-m); margin-top:2px;">
+            <div class="t-hlarge">Saturday night</div>
+            <span class="pill amber">needs review</span>
+          </div>
+          <div class="chiprow">
+            <span class="chip">3h 50m</span>
+            <span class="chip"><span class="dot g"></span>29 confident</span>
+            <span class="chip"><span class="dot a"></span>6 to review</span>
+            <span class="chip"><span class="dot u"></span>3 unknown</span>
+          </div>
+
+          <div class="section-label"><span>Your set</span></div>
           <div class="timeline">
             <div class="bar">
-              <div class="seg g" style="flex:3;"></div><div class="seg g" style="flex:2;"></div>
-              <div class="seg a" style="flex:1;"></div><div class="seg g" style="flex:4;"></div>
-              <div class="seg q" style="flex:1;"></div><div class="seg g" style="flex:2;"></div>
-              <div class="seg u" style="flex:1;"></div><div class="seg g" style="flex:3;"></div>
-              <div class="seg a" style="flex:1;"></div><div class="seg g" style="flex:2;"></div>
+              <div class="seg g" style="flex:5"></div><div class="seg g" style="flex:3"></div>
+              <div class="seg a" style="flex:1"></div><div class="seg g" style="flex:6"></div>
+              <div class="seg q" style="flex:1"></div><div class="seg g" style="flex:4"></div>
+              <div class="seg u" style="flex:1"></div><div class="seg g" style="flex:5"></div>
+              <div class="seg a" style="flex:1"></div><div class="seg g" style="flex:3"></div>
             </div>
-            <div class="ticks"><span>11:20 pm</span><span>1:00</span><span>2:00</span><span>3:32 am</span></div>
+            <div class="ticks"><span>10:20 pm</span><span>2:10 am</span></div>
           </div>
-          <div style="margin-top:16px;"><button class="btn">Finish review ✓</button></div>
-          <div class="section-label">needs a listen <span class="count">6</span>
-            <span class="bulk"><span>keep all</span><span>skip all</span></span>
+
+          <div style="margin-top:var(--space-l);">
+            <button class="btn">Finish review ✓</button>
+            <div class="btn-note">keeps go in the playlist — leftover clips are cleaned up</div>
           </div>
-          <div class="card" style="margin-bottom:10px;">
-            <div style="display:flex; align-items:center; gap:12px;">
-              <div class="art" style="background:url(art/onb-carcrash.jpg) center/cover;"></div>
-              <div style="flex:1; min-width:0;">
-                <div style="font-size:14.5px; font-weight:600;">car crash</div>
-                <div style="font-size:12.5px; color:var(--dim); margin-top:2px;">jigitz · 1:26 am</div>
-              </div>
-              <span class="confidence mid">heard once</span>
+
+          <div class="section-label">
+            <span>Needs a listen</span>
+            <span class="count">6</span>
+            <span class="act plain">
+              <span>keep all</span>
+              <span>skip all</span>
+            </span>
+          </div>
+
+          <div class="card amber" style="margin-bottom:var(--space-m);">
+            <div class="row" style="padding-top:0;">
+              <div class="art" style="background-image: url(art/onb-carcrash.jpg);"></div>
+              <div class="meta"><div class="t">car crash</div><div class="s">jigitz · 1:19 AM</div></div>
+              <span class="bubble amber">66%</span>
             </div>
-            <div class="row-actions">
-              <button class="btn ghost">▶ your clip</button>
-              <button class="btn secondary">Skip</button>
-              <button class="btn">Keep</button>
+            <div style="display:flex; gap:var(--space-s); margin-top:var(--space-m);">
+              <span class="clip-pill">▶ your clip</span>
+              <span class="clip-pill">▶ preview</span>
+            </div>
+            <div style="display:flex; gap:var(--space-s); margin-top:var(--space-s);">
+              <button class="btn raised small" style="flex:1;">Skip</button>
+              <button class="btn raised small" style="flex:1;">Keep</button>
+            </div>
+            <div class="btn-note" style="margin-top:10px;">not this song? search instead</div>
+          </div>
+
+          <div class="card" style="margin-bottom:var(--space-m);">
+            <div class="row muted" style="padding-top:0;">
+              <div class="art amber"></div>
+              <div class="meta"><div class="t">Pressure (Extended Mix)</div><div class="s">Kolter · 12:44 AM</div></div>
+              <span class="bubble amber">unconfirmed</span>
+            </div>
+            <div style="display:flex; gap:var(--space-s); margin-top:var(--space-m);">
+              <button class="btn raised small" style="flex:1; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 40%, transparent);">Skip</button>
+              <button class="btn raised small" style="flex:1;">Keep</button>
             </div>
           </div>
-          <div class="section-label">unknown moments (ignored) <span class="count">3</span></div>
-          <div class="card" style="padding:6px 14px;">
-            <div class="track-row">
-              <div class="art unknown">?</div>
-              <div class="meta"><div class="t" style="color:var(--unknown);">Unknown · 1:34 am</div><div class="s">left out of the playlist · clip saved</div></div>
-              <span class="save-ic">▶</span>
-              <span class="save-ic">⤓</span>
+
+          <div class="card">
+            <div class="row" style="padding-top:0;">
+              <div class="art" style="background-image: url(art/onb-wakemeup.jpg);"></div>
+              <div class="meta"><div class="t">Wake Me Up</div><div class="s">Avicii · 11:58 PM</div></div>
+              <span class="bubble amber">71%</span>
+            </div>
+            <div style="display:flex; gap:var(--space-s); margin-top:var(--space-m);">
+              <button class="btn raised small" style="flex:1;">Skip</button>
+              <button class="btn small" style="flex:1;">Keep</button>
             </div>
           </div>
-          <div class="section-label">going in the playlist <span class="count">29</span></div>
-          <div class="card" style="padding:6px 14px;">
-            <div class="track-row">
-              <div class="art" style="background:url(art/onb-inthisbih.jpg) center/cover;"></div>
+
+          <div class="section-label">
+            <span>Going in the playlist</span>
+            <span class="count">29</span>
+            <span class="act">♡ save all</span>
+          </div>
+          <div class="card rows">
+            <div class="row">
+              <div class="art" style="background-image: url(art/onb-inthisbih.jpg);"></div>
               <div class="meta"><div class="t">In This Bih'</div><div class="s">Chris Lorenzo &amp; Kah-Lo</div></div>
-              <span class="save-ic saved">♥</span>
-              <span class="time">1:31</span>
+              <span class="circ">▶</span><span class="circ on">♥</span><span class="stamp">1:31</span>
             </div>
-            <div class="track-row">
-              <div class="art" style="background:url(art/onb-palm.jpg) center/cover;"></div>
+            <div class="row">
+              <div class="art" style="background-image: url(art/onb-palm.jpg);"></div>
               <div class="meta"><div class="t">palm of my hands (Odd Mob Remix)</div><div class="s">John Summit &amp; venbee</div></div>
-              <span class="save-ic">♡</span>
-              <span class="time">12:58</span>
+              <span class="circ">▶</span><span class="circ">♡</span><span class="stamp">12:58</span>
+            </div>
+          </div>
+
+          <div class="section-label">
+            <span>Moments we couldn’t name</span>
+            <span class="count">3</span>
+            <span class="act">hide</span>
+          </div>
+          <div class="card rows red">
+            <div class="row" style="align-items:flex-start;">
+              <div class="art q">?</div>
+              <div class="meta">
+                <div class="t" style="color: var(--unknown);">Unknown · 1:34 AM</div>
+                <div class="s">left out of the playlist</div>
+                <div style="display:flex; gap:var(--space-s); margin-top:10px;">
+                  <span class="clip-pill">▶ your clip</span>
+                  <span class="clip-pill">keep clip</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
+
         <div class="tabbar">
-          <span class="tab"><span class="ic">♪</span>Library</span>
-          <span class="tab active"><span class="ic">◒</span>Sets</span>
-          <span class="tab cap"><span class="ic">●</span>Capture</span>
-          <span class="tab"><span class="ic">◎</span>Friends</span>
-          <span class="tab"><span class="ic">◍</span>Profile</span>
+          <span class="tab"><span class="glyph">♫</span>Library</span>
+          <span class="tab active">
+            <svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M6.5 7.5h11M9 4.8h6"/></svg>
+            Sets
+          </span>
+          <span class="tab catch"><span class="puck"><span></span></span>Catch</span>
+          <span class="tab">
+            <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.4 19.2c.6-3 2.9-4.7 5.6-4.7s5 1.7 5.6 4.7"/><circle cx="17.3" cy="8.6" r="2.6"/><path d="M16 14.7c2.3-.2 4.2 1.4 4.7 4.1"/></svg>
+            Friends
+          </span>
+          <span class="tab">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="9.6" r="3"/><path d="M5.9 19a6.6 6.6 0 0 1 12.2 0"/></svg>
+            Profile
+          </span>
         </div>
       </div>
     </div>
+
+    <ul class="claims">
+      <li data-t="review.c1"><b>Nothing is thrown away quietly.</b> A skipped track stays on the
+        card, greyed out, and you can bring it back with one tap.</li>
+      <li data-t="review.c2"><b>It flags its own mistakes.</b> A one-off ID inside a track it
+        already knew is marked a likely mis-hear and left out — labelled, not
+        hidden.</li>
+      <li data-t="review.c3"><b>Wrong song?</b> Search for the right one and swap it, from the
+        same card.</li>
+    </ul>
   </section>
 
-  <!-- 4 · the set -->
-  <section class="shot" data-slice="4">
+    <section class="shot" id="playlist" data-slice="4">
     <div class="shot-head">
-      <div class="ctx"><b>sunday</b> · the payoff</div>
-      <h2>One set, everyone on it</h2>
-      <p>One person captured; the whole crew gets the set. Export the playlist,
-         or share it as a card — like a Strava run, but for the set.</p>
+      <div class="ctx" data-t="playlist.ctx">step <b>3</b> · the set, kept</div>
+      <h2 data-t="playlist.h2">Everything that played, in order.</h2>
+      <p data-t="playlist.p">Each session becomes a set: the tracklist in order, a timeline you can
+         drag a finger across to see what was playing when, and
+         <strong>one tap to a playlist</strong> in Spotify or Apple Music.
+         Songs you loved get a heart and land in your library with the set
+         still attached to them.</p>
     </div>
     <div class="stage">
-      <div class="phone">
+      <div class="phone" lang="en">
         <div class="island"></div>
-        <div class="statusbar"><span>11:15</span><span class="right">◧ 96%</span></div>
+        <div class="statusbar"><span>11:15</span><span class="right">◧ 94%</span></div>
         <div class="screen with-tabs">
-          <div class="card" style="margin-top:4px; padding:22px 18px; background:
-            radial-gradient(circle at 80% 0%, rgba(167,139,250,.22), transparent 60%),
-            radial-gradient(circle at 10% 100%, rgba(232,121,249,.14), transparent 55%),
-            var(--surface);">
-            <div class="h-sub" style="margin:0 0 2px;">Sat, Jul 4 · Nowadays, Brooklyn</div>
-            <div class="h-large" style="font-size:24px;">Saturday @ Nowadays</div>
-            <div style="display:flex; align-items:center; gap:12px; margin-top:14px;">
-              <div class="avatar-stack">
-                <div class="avatar p1">Y</div><div class="avatar p2">D</div>
-                <div class="avatar p3">M</div><div class="avatar p4">P</div>
-              </div>
-              <div style="font-size:13px; color:var(--dim); line-height:1.45;">
-                captured by <strong style="color:var(--text);">you</strong> ·
-                Dana, Marcus &amp; Priya were on it
-              </div>
-            </div>
-            <div style="display:flex; gap:8px; margin-top:14px; flex-wrap:wrap;">
-              <span class="chip">4h 12m</span>
-              <span class="chip">35 tracks</span>
-              <span class="state-pill done">reviewed ✓</span>
-            </div>
-            <div style="display:flex; gap:8px; margin-top:16px;">
-              <button class="btn small" style="flex:1;">Open in Spotify</button>
-              <button class="btn secondary small" style="flex:1;">Share card</button>
-            </div>
+
+          <div class="navbar">
+            <span class="back">‹</span><span class="title">Set</span><span class="more">⋯</span>
           </div>
-          <div class="section-label">share it</div>
-          <div class="share-mini">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span class="brand"><em>Catchy</em></span>
-              <span style="font-size:11px; color:var(--faint);">Jul 4 · 2026</span>
-            </div>
-            <div style="font-size:20px; font-weight:800; letter-spacing:-.02em; margin-top:10px;">Saturday @ Nowadays</div>
-            <div style="font-size:12px; color:var(--dim); margin-top:3px;">4h 12m · 35 tracks · 3 still unknown</div>
-            <div class="timeline" style="margin-top:12px;">
-              <div class="bar" style="height:20px;">
-                <div class="seg g" style="flex:3;"></div><div class="seg g" style="flex:2;"></div>
-                <div class="seg a" style="flex:1;"></div><div class="seg g" style="flex:4;"></div>
-                <div class="seg u" style="flex:1;"></div><div class="seg g" style="flex:3;"></div>
-              </div>
-            </div>
-            <div style="font-size:11.5px; color:var(--dim); margin-top:10px;">
-              ♪ In This Bih' · palm of my hands · Wake Me Up…
-            </div>
+
+          <div class="t-hsub">Saturday, Jul 18</div>
+          <div style="display:flex; align-items:center; gap:var(--space-m); margin-top:2px;">
+            <div class="t-hlarge">Saturday night</div>
+            <span class="pill green">reviewed</span>
           </div>
-          <div style="margin-top:10px;">
-            <button class="btn ghost small" style="width:100%;">Share card + playlist link</button>
+          <div class="chiprow">
+            <span class="chip">3h 50m</span>
+            <span class="chip"><span class="dot g"></span>35 tracks</span>
+            <span class="chip"><span class="dot u"></span><span>3 uncaught moments</span></span>
           </div>
-          <div class="section-label">the playlist <span class="count">35</span></div>
-          <div class="card" style="padding:6px 14px;">
-            <div class="track-row">
-              <div class="art" style="background:url(art/onb-wakemeup.jpg) center/cover;"></div>
+
+          <div class="section-label"><span>Timeline</span></div>
+          <div class="timeline" style="position:relative;">
+            <div class="scrubchip">
+              <span class="dot g"></span>
+              <div><div class="t">In This Bih'</div><div class="s">Chris Lorenzo &amp; Kah-Lo · 1:31 AM</div></div>
+            </div>
+            <div class="bar">
+              <div class="seg g" style="flex:5"></div><div class="seg g" style="flex:3"></div>
+              <div class="seg a" style="flex:1"></div><div class="seg g" style="flex:6; box-shadow: inset 0 0 0 40px rgba(255,255,255,.22);"></div>
+              <div class="seg q" style="flex:1"></div><div class="seg g" style="flex:4"></div>
+              <div class="seg u" style="flex:1"></div><div class="seg g" style="flex:5"></div>
+              <div class="seg a" style="flex:1"></div><div class="seg g" style="flex:3"></div>
+            </div>
+            <div class="ticks"><span>10:20 pm</span><span>2:10 am</span></div>
+          </div>
+
+          <div style="display:flex; gap:var(--space-s); margin-top:var(--space-l);">
+            <button class="btn" style="flex:1;">Export to Spotify</button>
+            <button class="btn outline" style="flex:1;">Share</button>
+          </div>
+
+          <div class="section-label">
+            <span>Tracklist</span>
+            <span class="count">35</span>
+            <span class="act">♡ save all</span>
+          </div>
+          <div class="card rows">
+            <div class="row">
+              <span class="idx">1</span>
+              <div class="art" style="background-image: url(art/onb-wakemeup.jpg);"></div>
               <div class="meta"><div class="t">Wake Me Up</div><div class="s">Avicii</div></div>
-              <span class="save-ic saved">♥</span>
-              <span class="time">1:31</span>
+              <span class="circ">▶</span><span class="circ on">♥</span><span class="stamp">11:58</span>
             </div>
-            <div class="track-row">
-              <div class="art" style="background:url(art/onb-carcrash.jpg) center/cover;"></div>
+            <div class="row">
+              <span class="idx">2</span>
+              <div class="art" style="background-image: url(art/onb-palm.jpg);"></div>
+              <div class="meta"><div class="t">palm of my hands (Odd Mob Remix)</div><div class="s">John Summit &amp; venbee</div></div>
+              <span class="circ">▶</span><span class="circ">♡</span><span class="stamp">12:58</span>
+            </div>
+            <div class="row">
+              <span class="idx">3</span>
+              <div class="art" style="background-image: url(art/onb-carcrash.jpg);"></div>
               <div class="meta"><div class="t">car crash</div><div class="s">jigitz</div></div>
-              <span class="save-ic">♡</span>
-              <span class="time">12:44</span>
+              <span class="circ">▶</span><span class="circ">♡</span><span class="stamp">1:19</span>
+            </div>
+            <div class="row">
+              <span class="idx">4</span>
+              <div class="art" style="background-image: url(art/onb-inthisbih.jpg);"></div>
+              <div class="meta"><div class="t">In This Bih'</div><div class="s">Chris Lorenzo &amp; Kah-Lo</div></div>
+              <span class="circ">▶</span><span class="circ on">♥</span><span class="stamp">1:31</span>
             </div>
           </div>
         </div>
+
         <div class="tabbar">
-          <span class="tab"><span class="ic">♪</span>Library</span>
-          <span class="tab active"><span class="ic">◒</span>Sets</span>
-          <span class="tab cap"><span class="ic">●</span>Capture</span>
-          <span class="tab"><span class="ic">◎</span>Friends</span>
-          <span class="tab"><span class="ic">◍</span>Profile</span>
+          <span class="tab"><span class="glyph">♫</span>Library</span>
+          <span class="tab active">
+            <svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M6.5 7.5h11M9 4.8h6"/></svg>
+            Sets
+          </span>
+          <span class="tab catch"><span class="puck"><span></span></span>Catch</span>
+          <span class="tab">
+            <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.4 19.2c.6-3 2.9-4.7 5.6-4.7s5 1.7 5.6 4.7"/><circle cx="17.3" cy="8.6" r="2.6"/><path d="M16 14.7c2.3-.2 4.2 1.4 4.7 4.1"/></svg>
+            Friends
+          </span>
+          <span class="tab">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="9.6" r="3"/><path d="M5.9 19a6.6 6.6 0 0 1 12.2 0"/></svg>
+            Profile
+          </span>
         </div>
       </div>
     </div>
+
+    <ul class="claims">
+      <li data-t="playlist.c1"><b>Two export lanes.</b> Apple Music playlists land straight in your
+        own library — that one asks for permission once and needs an Apple
+        Music subscription on the phone. Spotify playlists come out curated by
+        Catchy: open the link, tap Follow, and it's in your library. There's no
+        Spotify account to connect on your side.</li>
+      <li data-t="playlist.c2"><b>Drag along the timeline</b> and a chip follows your finger naming
+        whatever was playing at that minute. Let go and it jumps to the track.</li>
+      <li data-t="playlist.c3"><b>Add, fix, or remove a song</b> at any point — while it's still
+        running, or months later.</li>
+    </ul>
   </section>
 
-  <!-- 5 · friends -->
-  <section class="shot" data-slice="5">
+    <section class="shot" id="share" data-slice="5">
     <div class="shot-head">
-      <div class="ctx"><b>during the week</b> · between sets</div>
-      <h2>Just your friends, no algorithm</h2>
-      <p>See who's out right now, join their set if you're there, steal their
-         weekend finds. Nothing autoplays, nobody's a stranger.
-         (This part comes after the core app.)</p>
+      <div class="ctx" data-t="share.ctx">step <b>4</b> · for the group chat</div>
+      <h2 data-t="share.h2">Proof you were there.</h2>
+      <p data-t="share.p">Every set renders a card — the name, the length, the timeline of what
+         played, and how many moments stayed a mystery.
+         <strong>Send the card and the playlist link together</strong>, or
+         drop it straight on a story. Like a Strava run, but for the music.</p>
     </div>
-    <div class="stage">
-      <div class="phone">
+
+    <div class="cardframe" style="max-width: 520px;">
+      <div class="sharecard" lang="en">
+        <div class="head">
+          <span class="mark"><span></span></span>
+          <span class="brand">Catchy</span>
+          <span class="when">Jul 18, 2026</span>
+        </div>
+        <div class="title">Saturday night</div>
+        <div class="counts">3h 50m · 35 tracks · 3 still unknown</div>
+        <div class="bar">
+          <div class="sc-g" style="flex:5"></div><div class="sc-g" style="flex:3"></div>
+          <div class="sc-a" style="flex:1"></div><div class="sc-g" style="flex:6"></div>
+          <div class="sc-q" style="flex:1"></div><div class="sc-g" style="flex:4"></div>
+          <div class="sc-u" style="flex:1"></div><div class="sc-g" style="flex:5"></div>
+          <div class="sc-a" style="flex:1"></div><div class="sc-g" style="flex:3"></div>
+        </div>
+        <div class="clocks"><span>10:20pm</span><span>2:10am</span></div>
+        <div class="tracks">♪ Wake Me Up · palm of my hands (Odd Mob Remix) · car crash · In This Bih'…</div>
+      </div>
+    </div>
+
+    <ul class="claims">
+      <li data-t="share.c1"><b>Three ways out</b> — <em>share card</em>,
+        <em>share playlist link</em>, or straight to
+        an Instagram story.</li>
+      <li data-t="share.c2"><b>It survives midnight.</b> A set that runs past 12 still belongs to
+        the day it started on, on the card and everywhere else.</li>
+      <li data-t="share.c3"><b>Nothing leaves your phone until you send it.</b> The card is
+        rendered on the device.</li>
+    </ul>
+  </section>
+
+    <section class="shot" id="friends" data-slice="6">
+    <div class="shot-head">
+      <div class="ctx" data-t="friends.ctx"><b>coming next</b> · not built yet</div>
+      <h2 data-t="friends.h2">Sets are better shared.</h2>
+      <p data-t="friends.p">Today Catchy is a solo instrument and the Friends tab says so, out
+         loud. <strong>This is what we're building next</strong> — where a
+         set stops being just yours and becomes something the whole group
+         has a copy of.</p>
+    </div>
+    <div class="stage duo">
+      <div class="pane">
+        <div class="pane-tag now" data-t="friends.tag.now">in your hands today</div>
+      <div class="phone" lang="en">
         <div class="island"></div>
         <div class="statusbar"><span>6:20</span><span class="right">◧ 84%</span></div>
         <div class="screen with-tabs">
-          <div style="margin-top:4px; display:flex; align-items:center; justify-content:space-between;">
-            <div class="h-large" style="font-size:24px;">Friends</div>
-            <span class="chip">+ add</span>
+          <div class="t-hlarge" style="padding: 8px 0 0;">Friends</div>
+          <div style="min-height: 380px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:var(--space-m);">
+          <div style="width:96px; height:96px; border-radius:99px; display:grid; place-items:center;
+                      border:1.5px solid color-mix(in srgb, var(--accent) 25%, transparent);">
+            <svg viewBox="0 0 24 24" style="width:32px;height:32px;fill:none;stroke:var(--accent);stroke-width:1.6;">
+              <circle cx="9" cy="8" r="3.2"/><path d="M3.4 19.2c.6-3 2.9-4.7 5.6-4.7s5 1.7 5.6 4.7"/>
+              <circle cx="17.3" cy="8.6" r="2.6"/><path d="M16 14.7c2.3-.2 4.2 1.4 4.7 4.1"/>
+            </svg>
           </div>
-          <div class="section-label">out right now</div>
-          <div class="card" style="border-color: rgba(52,211,153,.3);">
-            <div class="who">
-              <div class="avatar p2">D</div>
-              <div class="meta"><div class="n">Dana</div><div class="w">📍 Basement · Queens</div></div>
-              <span class="live">live · 47 min</span>
-            </div>
-            <div style="font-size:13px; color:var(--dim); margin-bottom:12px;">12 tracks caught so far — last one 2 min ago</div>
-            <button class="btn secondary small" style="width:100%;">I'm here too → join the set</button>
-          </div>
-          <div class="section-label">this week</div>
-          <div class="card" style="margin-bottom:12px;">
-            <div class="who">
-              <div class="avatar p3">M</div>
-              <div class="meta"><div class="n">Marcus · Friday</div><div class="w">📍 Knockdown Center</div></div>
-              <span class="ago">2d</span>
-            </div>
-            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
-              <span class="chip">31 tracks</span>
-              <span class="chip accent"><span class="dot u"></span> 2 unknown</span>
-            </div>
-            <div class="track-row" style="border:none; padding:6px 0;">
-              <div class="art a3"></div>
-              <div class="meta"><div class="t">Baddest Behaviour</div><div class="s">Chris Stussy · his top find</div></div>
-              <span class="save-ic">▶</span>
-              <span class="save-ic">♡</span>
-            </div>
-          </div>
-          <div class="card">
-            <div class="who">
-              <div class="avatar p2">D</div>
-              <div class="meta"><div class="n">Dana · last Saturday</div><div class="w">📍 Public Records</div></div>
-              <span class="ago">8d</span>
-            </div>
-            <div style="display:flex; gap:8px; flex-wrap:wrap;">
-              <span class="chip">24 tracks</span>
-              <span class="chip">you saved 3 of them</span>
-            </div>
+          <div class="t-hmedium">Sets are better shared.</div>
+          <div class="t-hsub" style="max-width: 36ch;">Friends land here next — see who was out,<br>compare catches, build the playlist together.</div>
+          <div style="font: var(--font-chip)/1.3 var(--sans); color: var(--faint);">coming soon — this is what we're building next</div>
           </div>
         </div>
         <div class="tabbar">
-          <span class="tab"><span class="ic">♪</span>Library</span>
-          <span class="tab"><span class="ic">◒</span>Sets</span>
-          <span class="tab cap"><span class="ic">●</span>Capture</span>
-          <span class="tab active"><span class="ic">◎</span>Friends</span>
-          <span class="tab"><span class="ic">◍</span>Profile</span>
+          <span class="tab"><span class="glyph">♫</span>Library</span>
+          <span class="tab">
+            <svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M6.5 7.5h11M9 4.8h6"/></svg>
+            Sets
+          </span>
+          <span class="tab catch"><span class="puck"><span></span></span>Catch</span>
+          <span class="tab active">
+            <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.4 19.2c.6-3 2.9-4.7 5.6-4.7s5 1.7 5.6 4.7"/><circle cx="17.3" cy="8.6" r="2.6"/><path d="M16 14.7c2.3-.2 4.2 1.4 4.7 4.1"/></svg>
+            Friends
+          </span>
+          <span class="tab">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="9.6" r="3"/><path d="M5.9 19a6.6 6.6 0 0 1 12.2 0"/></svg>
+            Profile
+          </span>
+        </div>
+      </div>
+      </div>
+
+      <div class="pane sketch">
+        <div class="pane-tag" data-t="friends.tag.soon">the sketch · not built</div>
+        <div class="phone" lang="en">
+          <div class="island"></div>
+          <div class="statusbar"><span>6:20</span><span class="right">◧ 84%</span></div>
+          <div class="screen with-tabs">
+            <div style="display:flex; align-items:center; justify-content:space-between; padding-top:8px;">
+              <div class="t-hlarge">Friends</div>
+              <span class="chip">+ add</span>
+            </div>
+
+            <div class="section-label"><span>Out right now</span></div>
+            <div class="card" style="border-color: color-mix(in srgb, var(--confident) 30%, transparent);">
+              <div style="display:flex; align-items:center; gap:var(--space-m);">
+                <div class="avatar" style="background: var(--confident);">D</div>
+                <div style="flex:1;">
+                  <div class="t-title">Dana</div>
+                  <div class="t-sub">Basement · Queens</div>
+                </div>
+                <span class="livepill"><span class="dot"></span>live · 47m</span>
+              </div>
+              <div class="t-sub" style="margin:var(--space-m) 0;">12 tracks caught so far — last one 2 min ago</div>
+              <button class="btn raised small" style="width:100%;">I'm here too → join the set</button>
+            </div>
+
+            <div class="section-label"><span>This week</span></div>
+            <div class="card" style="margin-bottom:var(--space-m);">
+              <div style="display:flex; align-items:center; gap:var(--space-m);">
+                <div class="avatar" style="background: var(--review);">M</div>
+                <div style="flex:1;">
+                  <div class="t-title">Marcus · Friday</div>
+                  <div class="t-sub">Knockdown Center</div>
+                </div>
+                <span class="t-time">2d</span>
+              </div>
+              <div class="chiprow" style="padding-top:var(--space-m);">
+                <span class="chip">31 tracks</span>
+                <span class="chip"><span class="dot u"></span>2 unknown</span>
+              </div>
+              <div class="row" style="padding-bottom:0;">
+                <div class="art" style="background-image: url(art/onb-carcrash.jpg);"></div>
+                <div class="meta"><div class="t">car crash</div><div class="s">jigitz · his top find</div></div>
+                <span class="circ">▶</span><span class="circ">♡</span>
+              </div>
+            </div>
+
+            <div class="card">
+              <div style="display:flex; align-items:center; gap:var(--space-m);">
+                <div class="avatar" style="background: var(--confident);">D</div>
+                <div style="flex:1;">
+                  <div class="t-title">Dana · last Saturday</div>
+                  <div class="t-sub">Public Records</div>
+                </div>
+                <span class="t-time">8d</span>
+              </div>
+              <div class="chiprow" style="padding-top:var(--space-m);">
+                <span class="chip">24 tracks</span>
+                <span class="chip">you saved 3 of them</span>
+              </div>
+            </div>
+          </div>
+          <div class="tabbar">
+            <span class="tab"><span class="glyph">♫</span>Library</span>
+            <span class="tab">
+              <svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M6.5 7.5h11M9 4.8h6"/></svg>
+              Sets
+            </span>
+            <span class="tab catch"><span class="puck"><span></span></span>Catch</span>
+            <span class="tab active">
+              <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.4 19.2c.6-3 2.9-4.7 5.6-4.7s5 1.7 5.6 4.7"/><circle cx="17.3" cy="8.6" r="2.6"/><path d="M16 14.7c2.3-.2 4.2 1.4 4.7 4.1"/></svg>
+              Friends
+            </span>
+            <span class="tab">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="9.6" r="3"/><path d="M5.9 19a6.6 6.6 0 0 1 12.2 0"/></svg>
+              Profile
+            </span>
+          </div>
         </div>
       </div>
     </div>
+
+    <p class="stage-note" data-t="friends.note">One of these is the Friends tab as it ships today.
+      The other is a drawing of where it goes — a sketch, not a screenshot of
+      anything that runs yet.</p>
+
+    <ul class="claims soon">
+      <li data-t="friends.c1"><b>One set, everyone's copy.</b> Two people in the same room catch
+        different songs — merge them and the set beats either one alone.</li>
+      <li data-t="friends.c2"><b>A link that opens the whole set</b>, not just a picture:
+        full tracklist, the timeline, tap through to the playlist.</li>
+      <li data-t="friends.c3"><b>Photos on the set.</b> The pictures from that room, attached to the
+        music from that room.</li>
+      <li data-t="friends.c4"><b>A nudge when an unknown finally drops.</b> That ID nobody could
+        name gets released six months later — you find out.</li>
+      <li data-t="friends.c5"><b>Your year in sets.</b> Everything you caught, one recap.</li>
+    </ul>
   </section>
 
-  <!-- 6 · profile -->
-  <section class="shot" data-slice="6">
+    <section class="shot" id="you" data-slice="7">
     <div class="shot-head">
-      <div class="ctx"><b>anytime</b> · you</div>
-      <h2>Your year, accumulating</h2>
-      <p>No bio — your stats are the profile: sets, hours, tracks, top venue.
-         Settings and your streaming connections live here too.</p>
+      <div class="ctx" data-t="you.ctx"><b>anytime</b> · you</div>
+      <h2 data-t="you.h2">No bio. Your stats are the profile.</h2>
+      <p data-t="you.p">Sets, tracks, hours caught, songs saved — accumulating on their own
+         while you listen. <strong>Share the card</strong> when a number
+         starts to look ridiculous.</p>
     </div>
     <div class="stage">
-      <div class="phone">
+      <div class="phone" lang="en">
         <div class="island"></div>
         <div class="statusbar"><span>6:21</span><span class="right">◧ 84%</span></div>
         <div class="screen with-tabs">
-          <div style="display:flex; align-items:center; gap:16px; margin-top:10px;">
-            <div class="avatar p1" style="width:64px; height:64px; font-size:24px;">I</div>
-            <div style="flex:1;">
-              <div class="h-large" style="font-size:24px;">Ignacio</div>
-              <div style="font-size:13px; color:var(--dim); margin-top:2px;">@ibassi · New York</div>
+          <div class="t-hlarge" style="padding: 8px 0 var(--space-l);">Profile</div>
+
+          <div style="display:flex; align-items:center; gap:var(--space-l);">
+            <div style="width:64px; height:64px; border-radius:99px; display:grid; place-items:center;
+                        background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+                        color: var(--on-accent);">
+              <svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;opacity:.7;">
+                <path d="M3.5 8.4h3.3l1.5-2.2h7.4l1.5 2.2h3.3v10.2H3.5z"/><circle cx="12" cy="13" r="3.4"/>
+              </svg>
             </div>
-            <span class="chip">edit</span>
-          </div>
-          <div style="display:flex; gap:8px; margin-top:14px; flex-wrap:wrap;">
-            <span class="chip">◎ @ibassi on instagram</span>
-            <span class="chip" style="border-style:dashed;">+ add link</span>
-          </div>
-          <div class="section-label">your year so far</div>
-          <div class="card" style="padding:18px 16px;">
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; text-align:center;">
-              <div>
-                <div style="font-size:26px; font-weight:800; letter-spacing:-.02em;">12</div>
-                <div style="font-size:11.5px; color:var(--faint); text-transform:uppercase; letter-spacing:.06em;">sets</div>
-              </div>
-              <div>
-                <div style="font-size:26px; font-weight:800; letter-spacing:-.02em;">41h</div>
-                <div style="font-size:11.5px; color:var(--faint); text-transform:uppercase; letter-spacing:.06em;">captured</div>
-              </div>
-              <div>
-                <div style="font-size:26px; font-weight:800; letter-spacing:-.02em;">214</div>
-                <div style="font-size:11.5px; color:var(--faint); text-transform:uppercase; letter-spacing:.06em;">tracks caught</div>
-              </div>
-              <div>
-                <div style="font-size:26px; font-weight:800; letter-spacing:-.02em;">27</div>
-                <div style="font-size:11.5px; color:var(--faint); text-transform:uppercase; letter-spacing:.06em;">saved</div>
-              </div>
-            </div>
-            <div style="border-top:1px solid var(--line); margin-top:16px; padding-top:12px; display:flex; flex-direction:column; gap:8px; font-size:13px; color:var(--dim);">
-              <div>🏠 top venue — <strong style="color:var(--text);">Nowadays ×4</strong></div>
-              <div>🎧 most caught — <strong style="color:var(--text);">Chris Stussy ×6</strong></div>
+            <div>
+              <div class="t-hmedium">You</div>
+              <div class="t-sub" style="color: var(--faint);">@instagram · optional</div>
             </div>
           </div>
-          <div class="section-label">settings</div>
-          <div class="card" style="padding:4px 14px;">
-            <div class="track-row">
-              <div class="meta">
-                <div class="t">Apple Music</div>
-                <div class="s">where playlists export</div>
-              </div>
-              <span class="state-pill done">connected ✓</span>
+
+          <div class="card" style="margin-top:var(--space-l); display:flex; justify-content:space-between; text-align:center;">
+            <div><div style="font:800 24px/1.1 var(--sans);">12</div><div style="font-size:10px; font-weight:600; letter-spacing:.6px; color:var(--faint);">SETS</div></div>
+            <div><div style="font:800 24px/1.1 var(--sans);">214</div><div style="font-size:10px; font-weight:600; letter-spacing:.6px; color:var(--faint);">TRACKS</div></div>
+            <div><div style="font:800 24px/1.1 var(--sans);">41h</div><div style="font-size:10px; font-weight:600; letter-spacing:.6px; color:var(--faint);">CAUGHT</div></div>
+            <div><div style="font:800 24px/1.1 var(--sans);">27</div><div style="font-size:10px; font-weight:600; letter-spacing:.6px; color:var(--faint);">SAVED</div></div>
+          </div>
+          <div style="border-top:.5px solid var(--line); margin-top:var(--space-m); padding-top:var(--space-m); text-align:center;">
+            <span style="font: var(--font-section-label)/1 var(--sans); letter-spacing:.8px; color: var(--accent);">♪ Share my stats</span>
+          </div>
+
+          <div class="section-label"><span>Settings</span></div>
+          <div class="card rows">
+            <div class="row">
+              <div class="meta"><div class="t">Spotify</div><div class="s">playlists export here</div></div>
+              <span class="pill green">connected ✓</span>
             </div>
-            <div class="track-row">
-              <div class="meta">
-                <div class="t">Notifications</div>
-                <div class="s">review nudge · playlist ready</div>
-              </div>
-              <span class="time">›</span>
+            <div class="row">
+              <div class="meta"><div class="t">Apple Music</div><div class="s">export sets from the set page menu</div></div>
+              <span class="pill green">ready ✓</span>
+            </div>
+            <div class="row">
+              <div class="meta"><div class="t">Notifications &amp; timing</div><div class="s">nudges, reminders, clip retention</div></div>
+              <span class="t-time">›</span>
+            </div>
+            <div class="row">
+              <div class="meta"><div class="t">Privacy &amp; FAQ</div><div class="s">what's kept, what never is — and why</div></div>
+              <span class="t-time">›</span>
+            </div>
+            <div class="row">
+              <div class="meta"><div class="t">Replay the intro</div><div class="s">the three-card tour from first launch</div></div>
+              <span class="t-time">›</span>
             </div>
           </div>
         </div>
+
         <div class="tabbar">
-          <span class="tab"><span class="ic">♪</span>Library</span>
-          <span class="tab"><span class="ic">◒</span>Sets</span>
-          <span class="tab cap"><span class="ic">●</span>Capture</span>
-          <span class="tab"><span class="ic">◎</span>Friends</span>
-          <span class="tab active"><span class="ic">◍</span>Profile</span>
+          <span class="tab"><span class="glyph">♫</span>Library</span>
+          <span class="tab">
+            <svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M6.5 7.5h11M9 4.8h6"/></svg>
+            Sets
+          </span>
+          <span class="tab catch"><span class="puck"><span></span></span>Catch</span>
+          <span class="tab">
+            <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.4 19.2c.6-3 2.9-4.7 5.6-4.7s5 1.7 5.6 4.7"/><circle cx="17.3" cy="8.6" r="2.6"/><path d="M16 14.7c2.3-.2 4.2 1.4 4.7 4.1"/></svg>
+            Friends
+          </span>
+          <span class="tab active">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="9.6" r="3"/><path d="M5.9 19a6.6 6.6 0 0 1 12.2 0"/></svg>
+            Profile
+          </span>
         </div>
+      </div>
+    </div>
+
+    <div class="cardframe" style="max-width: 360px; margin-top: 26px;">
+      <div class="statcard" lang="en">
+        <div class="head">
+          <span class="mark"><span></span></span>
+          <span class="brand">Catchy</span>
+          <span class="since">since May 2026</span>
+        </div>
+        <div class="body">
+          <div class="tiles">
+            <div class="tile"><b>12</b><span>sets</span></div>
+            <div class="tile"><b>214</b><span>tracks caught</span></div>
+            <div class="tile"><b>41</b><span>hours of music</span></div>
+            <div class="tile"><b>27</b><span>saved to library</span></div>
+          </div>
+          <div class="mosaic">
+            <i><em class="sc-g" style="height:38%"></em><em class="sc-a" style="height:9%"></em><em class="sc-g" style="height:22%"></em></i>
+            <i><em class="sc-g" style="height:26%"></em><em class="sc-u" style="height:7%"></em><em class="sc-g" style="height:31%"></em></i>
+            <i><em class="sc-g" style="height:44%"></em><em class="sc-q" style="height:8%"></em><em class="sc-g" style="height:18%"></em></i>
+            <i><em class="sc-g" style="height:20%"></em><em class="sc-a" style="height:11%"></em><em class="sc-g" style="height:29%"></em></i>
+            <i><em class="sc-g" style="height:33%"></em><em class="sc-g" style="height:24%"></em></i>
+            <i><em class="sc-g" style="height:47%"></em><em class="sc-u" style="height:6%"></em><em class="sc-g" style="height:14%"></em></i>
+          </div>
+        </div>
+        <div class="foot">live music captured</div>
       </div>
     </div>
   </section>
 
-  <footer data-slice="6">
+    <section class="privacy" id="privacy" data-slice="7">
+    <div class="card">
+      <h2 data-t="privacy.h2">It listens. Here is exactly what it keeps.</h2>
+      <p class="sub" data-t="privacy.sub">An app that holds a microphone open for hours owes you a
+        straight answer about where the sound goes.</p>
+      <ul class="claims" style="background:none;border:none;padding:0;margin:0 auto;">
+        <li data-t="privacy.c1"><b>The sound itself never leaves.</b> Your phone turns what it
+          hears into a fingerprint on the device and sends only that — never
+          the audio — to Apple's Shazam service to be matched. The audio it
+          fingerprinted is dropped on the spot.</li>
+        <li data-t="privacy.c2"><b>Audio is kept only where you'll be asked to judge it</b> — one
+          short clip for each song it was unsure about, and each moment it
+          couldn't name. They stay on your phone, delete themselves when you
+          finish reviewing the set (or after 30 days if you never do), and
+          leave the device only if you deliberately share one. The one
+          exception is a clip you tap <em>keep clip</em> on: that one is yours
+          until you delete it.</li>
+        <li data-t="privacy.c3"><b>When a match can't be made right then</b> — no signal, or the
+          service not answering — that stretch of audio waits on the phone
+          until it can be identified, and is deleted the moment it is. That's
+          the price of not losing it.</li>
+        <li data-t="privacy.c4"><b>No account today.</b> Capturing, reviewing and exporting need no
+          sign-up, no password and no profile on a server — your sets live on
+          your phone. (The friends features further up would need something to
+          connect people; we'll say so plainly when we get there.)</li>
+        <li data-t="privacy.c5"><b>No analytics SDK, no tracking, no location.</b> The only thing
+          our own server ever sees is a random install ID when you export to
+          Spotify — it exists to stop the shared Spotify account being abused,
+          it's tied to nothing about you, and it resets if you reinstall.</li>
+      </ul>
+      <p class="more"><a href="privacy.html" data-t="privacy.more">The full privacy policy →</a></p>
+    </div>
+  </section>
+
+  <section class="close" data-slice="7">
+    <h2 data-t="close.h2">Try it on the next one.</h2>
+    <p data-t="close.p">It's in friends-and-family alpha right now — the app opens on the line
+      <em>&ldquo;Every set becomes a playlist.&rdquo;</em> and the fastest way to
+      make that true is to use it and tell us what broke.</p>
+    <p style="margin-top:22px;">
+      <a class="cta" href="https://testflight.apple.com/join/hEEk8fKf" data-t="cta">Join the alpha on TestFlight →</a>
+    </p>
+    <p class="cta-note" data-t="cta.note">iPhone · iOS 17.2 or newer · nothing to sign up for</p>
+  </section>
+
+  <footer data-slice="7">
     <span class="wordmark"><em>Catchy</em></span>
-    working name · concept mocks v3, July 2026 · all names, venues &amp; tracks on
-    these screens are placeholder data · sent to you because your taste is trusted
+    <span data-t="footer.made">Made with ♥ by Ignacio.</span><br>
+    <span data-t="footer.example">Names, places, track titles, artwork and times on these screens are example data.</span><br>
+    <span data-t="footer.applang" class="applang" hidden>The app itself is in English for now.</span>
+    <a href="privacy.html" data-t="footer.privacy">Privacy</a>
   </footer>
 
 </div>
 
 <script>
+  // #s1…#s7 renders a single slice on its own — handy for screenshots.
   const m = location.hash.match(/^#s(\d)$/);
   if (m) {
     document.querySelectorAll('[data-slice]').forEach(el => {
@@ -738,4 +1332,148 @@
     });
     document.body.style.paddingBottom = '40px';
   }
+</script>
+
+<script>
+// ---------------------------------------------------------------- language
+// English lives in the markup, so the page is right with JS off and right for
+// crawlers. Spanish is a lookup applied over it. The phone screens are
+// deliberately NOT translated: the app ships in English, and a translated
+// screenshot would promise a Spanish app that doesn't exist.
+const ES = {
+  'hero.eyebrow': 'alfa para amigos y familia · en TestFlight',
+  'hero.h1': 'Descubre cada canción que sonó.',
+  'hero.lede': 'Venga la música de donde venga — un DJ, un bar, una fiesta, el aux de alguien más — abre <strong>Catchy</strong> cuando empieza la música. Se queda escuchando contigo y va nombrando lo que oye, hora tras hora, y es honesta con lo que se le escapó. Después todo eso es tuyo: la lista de canciones, una línea de tiempo de lo que sonó, y una playlist para mandarles a tus amigos.',
+  'hero.versus': 'Shazam captura <b>una canción</b>. Catchy captura <b>todo lo que sonó</b>.',
+
+  'step1.t': 'Captura', 'step1.d': 'un toque cuando empieza la música',
+  'step2.t': 'Revisa',  'step2.d': 'resuelve las dudas cuando quieras',
+  'step3.t': 'Playlist', 'step3.d': 'Spotify o Apple Music',
+  'step4.t': 'Comparte', 'step4.d': 'una tarjeta del set, para el grupo',
+  'step.go': 'verlo →',
+
+  'more.friends': 'Amigos — lo que viene',
+  'more.you': 'Tu perfil',
+  'more.privacy': 'Qué guarda',
+  'cta': 'Únete a la alfa en TestFlight →',
+  'cta.note': 'iPhone · iOS 17.2 o superior · no hay que registrarse',
+
+  'catch.ctx': 'paso <b>1</b> · mientras suena la música',
+  'catch.h2': 'Inícialo una vez y después toca lo que importa.',
+  'catch.p': '<strong>Toca el disco para cualquier canción que no te quieras perder</strong> — esa es la captura que nunca falla, y funciona desde la pantalla bloqueada sin desbloquear. Mientras tanto, deja el celular donde pueda oír y va sumando lo que logra captar. Lo que no puede nombrar queda marcado igual, con el momento guardado, así no desaparece nada en silencio.',
+  'catch.c1': '<b>Sigue en marcha con la pantalla apagada.</b> Bloquea el celular, usa otras apps — el set sigue en marcha, y te lo dice en la pantalla bloqueada. Si grabas un video, la cámara se queda con el micrófono, así que el set se pausa solo y se reanuda cuando vuelves.',
+  'catch.c2': '<b>Hay un botón <em lang=\'en\'>Catch now</em> en la pantalla bloqueada.</b> Escuchas algo que necesitas identificar, lo presionas sin desbloquear, y unos quince segundos después tienes la respuesta.',
+  'catch.c3': '<b>Sin señal no pasa nada.</b> Sigue juntando por su cuenta y nombra todo apenas vuelves a tener internet — <em lang=\'en\'>No service — still capturing</em>.',
+  'catch.c4': '<b>Cuando falla, lo dice</b> — <em lang=\'en\'>too muffled to name — try it out of your pocket</em> — en vez de hacer como que no oyó nada.',
+
+  'review.ctx': 'paso <b>2</b> · cuando tengas un rato',
+  'review.h2': 'Resuelve las dudas en un minuto.',
+  'review.p': 'Lo seguro ya está en la playlist. Para todo lo que quedó a medias, <strong>escuchas los segundos exactos que capturó tu celular</strong> y lo dejas o lo sacas — o tocas <em lang=\'en\'>keep all</em> y listo. Los momentos que no pudo nombrar quedan abajo, etiquetados con honestidad, con el clip guardado por si quieres buscar el ID después.',
+  'review.c1': '<b>Nada se descarta en silencio.</b> Una canción descartada sigue en la tarjeta, apagada, y la recuperas con un toque.',
+  'review.c2': '<b>Marca sus propios errores.</b> Un ID suelto dentro de una canción que ya conocía queda señalado como probable equivocación y fuera de la playlist — etiquetado, no escondido.',
+  'review.c3': '<b>¿Canción equivocada?</b> Busca la correcta y cámbiala, desde la misma tarjeta.',
+
+  'playlist.ctx': 'paso <b>3</b> · el set, guardado',
+  'playlist.h2': 'Todo lo que sonó, en orden.',
+  'playlist.p': 'Cada sesión se convierte en un set: la lista de canciones en orden, una línea de tiempo por la que puedes arrastrar el dedo para ver qué sonaba en cada momento, y <strong>un toque para tener la playlist</strong> en Spotify o Apple Music. Las canciones que te gustaron se llevan un corazón y quedan en tu biblioteca con el set todavía pegado a ellas.',
+  'playlist.c1': '<b>Dos formas de exportar.</b> Las playlists de Apple Music van directo a tu biblioteca — esa vía te pide permiso una vez y necesita una suscripción a Apple Music en el celular. Las de Spotify salen curadas por Catchy: abres el link, tocas <em lang=\'en\'>Follow</em>, y ya está en tu biblioteca. No tienes que conectar ninguna cuenta de Spotify.',
+  'playlist.c2': '<b>Arrastra el dedo por la línea de tiempo</b> y una etiqueta te va diciendo qué sonaba en ese minuto. La sueltas y salta a la canción.',
+  'playlist.c3': '<b>Agrega, corrige o quita una canción</b> en cualquier momento — mientras el set sigue en marcha, o meses después.',
+
+  'share.ctx': 'paso <b>4</b> · para el grupo',
+  'share.h2': 'La prueba de que estuviste.',
+  'share.p': 'Cada set genera una tarjeta — el nombre, la duración, la línea de tiempo de lo que sonó, y cuántos momentos quedaron sin resolver. <strong>Manda la tarjeta y el link de la playlist juntos</strong>, o súbela directo a una historia. Como una carrera de Strava, pero de música.',
+  'share.c1': '<b>Tres formas de compartir</b> — <em lang=\'en\'>share card</em>, <em lang=\'en\'>share playlist link</em>, o directo a una historia de Instagram.',
+  'share.c2': '<b>Sobrevive a la medianoche.</b> Un set que cruza las 12 sigue perteneciendo al día en que empezó, en la tarjeta y en todos lados.',
+  'share.c3': '<b>Nada sale de tu celular hasta que lo mandas.</b> La tarjeta se genera en el dispositivo.',
+
+  'friends.ctx': '<b>lo que viene</b> · todavía no está hecho',
+  'friends.h2': 'Los sets se disfrutan más en grupo.',
+  'friends.p': 'Hoy Catchy es un instrumento solitario y la pestaña de Amigos lo dice en voz alta. <strong>Esto es lo que vamos a construir a continuación</strong> — donde un set deja de ser solo tuyo y pasa a ser algo de lo que todo el grupo tiene una copia.',
+  'friends.tag.now': 'en tus manos hoy',
+  'friends.tag.soon': 'el boceto · no está hecho',
+  'friends.note': 'Una de estas es la pestaña de Amigos como está hoy. La otra es un dibujo de hacia dónde va — un boceto, no una captura de algo que ya funcione.',
+  'friends.c1': '<b>Un set, la copia de todos.</b> Dos personas en el mismo lugar capturan canciones distintas — júntalas y el set queda mejor que el de cualquiera de las dos por separado.',
+  'friends.c2': '<b>Un link que abre el set entero</b>, no solo una imagen: la lista completa, la línea de tiempo, y un toque para ir a la playlist.',
+  'friends.c3': '<b>Fotos en el set.</b> Las fotos de ese lugar, pegadas a la música de ese lugar.',
+  'friends.c4': '<b>Un aviso cuando por fin sale una canción desconocida.</b> Esa canción que nadie pudo nombrar se publica seis meses después — y te enteras.',
+  'friends.c5': '<b>Tu año en sets.</b> Todo lo que capturaste, en un resumen.',
+
+  'you.ctx': '<b>cuando quieras</b> · tú',
+  'you.h2': 'Sin biografía. Tus números son el perfil.',
+  'you.p': 'Sets, canciones, horas capturadas, canciones guardadas — se acumulan solos mientras escuchas. <strong>Comparte la tarjeta</strong> cuando algún número empiece a dar risa.',
+
+  'privacy.h2': 'La app escucha. Esto es exactamente lo que guarda.',
+  'privacy.sub': 'Una app que tiene el micrófono abierto durante horas te debe una respuesta clara sobre a dónde va ese sonido.',
+  'privacy.c1': '<b>El sonido en sí nunca sale.</b> Tu celular convierte, ahí mismo en el dispositivo, lo que oye en una huella acústica y manda solo eso — nunca el audio — al servicio Shazam de Apple para identificarlo. El audio del que sacó la huella se descarta en el acto.',
+  'privacy.c2': '<b>Solo se guarda audio de lo que te vamos a pedir que decidas tú</b> — un clip corto por cada canción de la que no estuvo segura, y por cada momento que no pudo nombrar. Quedan en tu celular, se borran solos cuando terminas de revisar el set (o a los 30 días si nunca lo haces), y salen del dispositivo únicamente si tú decides compartir uno. La única excepción es un clip al que le tocas <em lang=\'en\'>keep clip</em>: ese queda tuyo hasta que lo borres.',
+  'privacy.c3': '<b>Cuando no se puede identificar en el momento</b> — sin señal, o con el servicio caído — ese tramo de audio espera en el celular hasta que se pueda resolver, y se borra apenas se resuelve. Ese es el precio de no perderlo.',
+  'privacy.c4': '<b>Hoy no hay cuenta.</b> Capturar, revisar y exportar no requieren registro, ni contraseña, ni un perfil en un servidor — tus sets viven en tu celular. (Lo de amigos, más arriba, necesitaría algo que conecte a las personas; cuando lleguemos ahí lo vamos a decir claramente.)',
+  'privacy.c5': '<b>Sin SDK de analítica de terceros, sin rastreo, sin ubicación.</b> Lo único que ve nuestro propio servidor es un identificador de instalación aleatorio cuando exportas a Spotify — existe para que no abusen de la cuenta de Spotify compartida, no está atado a nada tuyo, y se reinicia si reinstalas.',
+  'privacy.more': 'La política de privacidad completa →',
+
+  'close.h2': 'Pruébala en la próxima.',
+  'close.p': 'Está en alfa para amigos y familia — la app abre con la frase <em lang=\'en\'>&ldquo;Every set becomes a playlist.&rdquo;</em> y la forma más rápida de que eso sea verdad es usarla y contarnos qué se rompió.',
+
+  'footer.made': 'Hecho con ♥ por Ignacio.',
+  'footer.example': 'Los nombres, los lugares, los títulos, las portadas y los horarios de estas pantallas son datos de ejemplo.',
+  'footer.applang': 'Las pantallas de la app están en inglés: así se ve hoy.',
+  'footer.privacy': 'Privacidad',
+
+  'doc.title': 'Catchy — descubre cada canción que sonó',
+  'doc.description': 'Catchy escucha mientras suena la música y va nombrando lo que oye — con honestidad, incluyendo lo que se le escapó — así te llevas el set entero a casa como una playlist que puedes guardar y compartir.',
+};
+
+(() => {
+  const nodes = [...document.querySelectorAll('[data-t]')];
+  const EN = new Map(nodes.map(n => [n, n.innerHTML]));
+  const buttons = [...document.querySelectorAll('.lang')];
+  const applang = document.querySelector('.applang');
+  const meta = document.querySelector('meta[name="description"]');
+  const enTitle = document.title;
+  const enDesc = meta ? meta.content : '';
+
+  function apply(lang) {
+    for (const n of nodes) {
+      const es = ES[n.dataset.t];
+      n.innerHTML = lang === 'es' && es ? es : EN.get(n);
+    }
+    document.title = lang === 'es' ? ES['doc.title'] : enTitle;
+    if (meta) meta.content = lang === 'es' ? ES['doc.description'] : enDesc;
+    if (applang) applang.hidden = lang !== 'es';
+    document.documentElement.lang = lang;
+    for (const b of buttons) b.setAttribute('aria-pressed', String(b.dataset.lang === lang));
+  }
+
+  // A link can name the language, so ibassi.github.io/catchy/?espanol lands a
+  // Spanish reader on Spanish with nothing to click. Aliases because whoever
+  // pastes the link should not have to remember the canonical spelling.
+  const q = new URLSearchParams(location.search);
+  const named = ['lang', 'hl', 'idioma'].map(k => (q.get(k) || '').toLowerCase())
+    .find(v => v === 'es' || v === 'en' || v === 'espanol' || v === 'español' || v === 'english');
+  const flag = ['es', 'espanol', 'español', 'spanish'].some(k => q.has(k)) ? 'es'
+             : ['en', 'english', 'ingles', 'inglés'].some(k => q.has(k)) ? 'en' : null;
+  const fromURL = flag || (named ? (named.startsWith('es') ? 'es' : 'en') : null);
+
+  let saved = null;
+  try { saved = localStorage.getItem('catchy.lang'); } catch {}
+  const auto = (navigator.language || '').toLowerCase().startsWith('es') ? 'es' : 'en';
+
+  // A link beats a past visit beats the browser's own setting.
+  const initial = fromURL || (saved === 'en' || saved === 'es' ? saved : auto);
+  apply(initial);
+  // Following a language link IS a choice — make it stick for the next visit.
+  if (fromURL) { try { localStorage.setItem('catchy.lang', fromURL); } catch {} }
+
+  // Only an explicit click is a preference — persisting the auto-detected
+  // value would pin a visitor to whatever locale they happened to arrive with.
+  for (const b of buttons) b.addEventListener('click', () => {
+    apply(b.dataset.lang);
+    try { localStorage.setItem('catchy.lang', b.dataset.lang); } catch {}
+  });
+
+  // The toggle only works with JS, so it only exists with JS.
+  const bar = document.querySelector('.langbar');
+  if (bar) bar.style.display = 'flex';
+})();
 </script>
